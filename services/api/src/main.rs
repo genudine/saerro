@@ -1,3 +1,7 @@
+use core::time;
+use std::{ops::Sub, time::SystemTime};
+
+use once_cell::sync::Lazy;
 use salvo::cors::Cors;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -28,6 +32,11 @@ struct WorldPopulation {
 struct MultipleWorldPopulation {
     worlds: Vec<WorldPopulation>,
 }
+
+pub static REDIS_CLIENT: Lazy<redis::Client> = Lazy::new(|| {
+    redis::Client::open(std::env::var("REDIS_ADDR").unwrap_or("redis://localhost:6379".to_string()))
+        .unwrap()
+});
 
 #[handler]
 async fn info(req: &mut Request, res: &mut Response) {
@@ -78,14 +87,27 @@ async fn get_world_multi(req: &mut Request, res: &mut Response) {
 }
 
 async fn get_world_pop(world_id: String) -> WorldPopulation {
+    let mut con = REDIS_CLIENT.get_connection().unwrap();
+
+    let filter_timestamp = SystemTime::now()
+        .sub(time::Duration::from_secs(60 * 15))
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    let (tr, vs, nc): (u32, u32, u32) = redis::pipe()
+        .zcount(format!("{}/{}", world_id, 1), filter_timestamp, "+inf")
+        .zcount(format!("{}/{}", world_id, 2), filter_timestamp, "+inf")
+        .zcount(format!("{}/{}", world_id, 3), filter_timestamp, "+inf")
+        .query(&mut con)
+        .unwrap();
+
+    let total = tr + vs + nc;
+
     let response = WorldPopulation {
         world_id: world_id.parse().unwrap(),
-        total: 0,
-        factions: Factions {
-            tr: 0,
-            nc: 0,
-            vs: 0,
-        },
+        total,
+        factions: Factions { tr, nc, vs },
     };
 
     response

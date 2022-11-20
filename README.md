@@ -70,5 +70,6 @@ This API only supports GET, and supports CORS.
   - Serves https://saerro.harasse.rs
 - Redis
   - Using ZADD with score as timestamp, ZCOUNTBYSCORE by timestamp in 15 minute windows, and cleaned up with SCAN+ZREMBYSCORE, population data is tracked.
+  - There is deliberately no persistence.
 - Redis "Tender"
   - Cleans up Redis every 5 mins.
