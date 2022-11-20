@@ -95,7 +95,7 @@ async fn get_world_pop(world_id: String) -> WorldPopulation {
         .unwrap()
         .as_secs();
 
-    let (tr, vs, nc): (u32, u32, u32) = redis::pipe()
+    let (vs, nc, tr): (u32, u32, u32) = redis::pipe()
         .zcount(format!("{}/{}", world_id, 1), filter_timestamp, "+inf")
         .zcount(format!("{}/{}", world_id, 2), filter_timestamp, "+inf")
         .zcount(format!("{}/{}", world_id, 3), filter_timestamp, "+inf")
