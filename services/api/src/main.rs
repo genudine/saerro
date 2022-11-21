@@ -19,6 +19,7 @@ struct Factions {
     tr: u32,
     nc: u32,
     vs: u32,
+    ns: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -95,10 +96,11 @@ async fn get_world_pop(world_id: String) -> WorldPopulation {
         .unwrap()
         .as_secs();
 
-    let (vs, nc, tr): (u32, u32, u32) = redis::pipe()
-        .zcount(format!("{}/{}", world_id, 1), filter_timestamp, "+inf")
-        .zcount(format!("{}/{}", world_id, 2), filter_timestamp, "+inf")
-        .zcount(format!("{}/{}", world_id, 3), filter_timestamp, "+inf")
+    let (vs, nc, tr, ns): (u32, u32, u32, u32) = redis::pipe()
+        .zcount(format!("wp:{}/{}", world_id, 1), filter_timestamp, "+inf")
+        .zcount(format!("wp:{}/{}", world_id, 2), filter_timestamp, "+inf")
+        .zcount(format!("wp:{}/{}", world_id, 3), filter_timestamp, "+inf")
+        .zcount(format!("wp:{}/{}", world_id, 4), filter_timestamp, "+inf")
         .query(&mut con)
         .unwrap();
 
@@ -107,7 +109,7 @@ async fn get_world_pop(world_id: String) -> WorldPopulation {
     let response = WorldPopulation {
         world_id: world_id.parse().unwrap(),
         total,
-        factions: Factions { tr, nc, vs },
+        factions: Factions { tr, nc, vs, ns },
     };
 
     response
