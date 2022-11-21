@@ -14,7 +14,7 @@ fn cmd_prune() {
     let mut con = REDIS_CLIENT.get_connection().unwrap();
 
     let prune_after = SystemTime::now()
-        .sub(Duration::from_secs(60))
+        .sub(Duration::from_secs(60 * 15))
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs();
