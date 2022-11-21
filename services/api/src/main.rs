@@ -2,7 +2,7 @@ pub mod cors;
 
 use core::time;
 use once_cell::sync::Lazy;
-use rocket::{data::Outcome, http::uri::Host, request::FromRequest, Build, Request, Rocket};
+use rocket::{Build, Rocket};
 use serde::{Deserialize, Serialize};
 use std::{ops::Sub, time::SystemTime};
 
