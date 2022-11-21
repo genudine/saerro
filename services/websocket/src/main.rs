@@ -110,12 +110,8 @@ async fn main() {
     let init = tokio::spawn(send_init(tx.clone()));
 
     futures::select! {
-        _ = fused_reader => {
-            println!("Reader finished");
-        }
-        _ = fused_writer => {
-            println!("Writer finished");
-        }
+        _ = fused_reader => {}
+        _ = fused_writer => {}
     }
 
     init.await.unwrap();

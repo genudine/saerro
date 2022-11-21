@@ -64,8 +64,8 @@ This API only supports GET, and supports CORS.
 ## Architecture
 
 - Websocket processors
-  - One pair per PC, PS4US, PS4EU
-  - Each pair connects to either Census Websocket or NS Websocket, depending on availability.
+  - One per PC, PS4US, PS4EU
+  - Connects to [wss://push.nanite-systems.net](https://nanite-systems.net), one process per "environment"
 - API
   - Serves https://saerro.harasse.rs
 - Redis
