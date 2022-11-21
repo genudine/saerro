@@ -1,0 +1,62 @@
+# Temporary deployment stuff
+version: '3.7'
+
+services:
+  redis:
+    image: redis:alpine
+    command: redis-server --save "" --appendonly no
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+  
+  api:
+    image: ghcr.io/genudine/saerro/api:latest
+    pull_policy: always
+    ports:
+      - 8000:8000
+    links:
+      - redis
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - ROCKET_ADDRESS=0.0.0.0
+  
+  ws_pc:
+    image: ghcr.io/genudine/saerro/websocket:latest
+    pull_policy: always
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2&service-id=s:saegd
+      WORLDS: 1,10,13,17,19,40
+    links:
+      - redis
+  
+  ws_ps4us:
+    image: ghcr.io/genudine/saerro/websocket:latest
+    pull_policy: always
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2ps4us&service-id=s:saegd
+      WORLDS: 1000
+    links:
+      - redis
+
+  ws_ps4eu:
+    image: ghcr.io/genudine/saerro/websocket:latest
+    pull_policy: always
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2ps4eu&service-id=s:saegd
+      WORLDS: 2000
+    links:
+      - redis
+  
+  task_prune:
+    image: ghcr.io/genudine/saerro/tasks:latest
+    command: /app prune
+    pull_policy: always
+    restart: "no"
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    links:
+      - redis
