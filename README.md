@@ -21,6 +21,7 @@ This API will never return a failure unless the app itself is failing. If you re
 This API only supports GET, and supports CORS.
 
 - [`/`](https://saerro.harasse.rs) - Shows a help/usage message.
+- [`/w/{worldID}`](https://saerro.harasse.rs) - Shows a help/usage message.
 
   ```json
   {
