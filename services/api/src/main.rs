@@ -67,7 +67,7 @@ async fn health(mut con: Connection<RedisPool>) -> serde_json::Value {
         .unwrap_or_default();
 
     json!({
-        "status": "ok",
+        "status": if ping == "PONG" && pc && ps4us && ps4eu { "ok" } else { "degraded" },
         "redis": ping == "PONG",
         "pc": if pc { "primary" } else { "backup/down" },
         "ps4us": if ps4us { "primary" } else { "backup/down" },
