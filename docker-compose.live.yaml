@@ -14,12 +14,12 @@ services:
     image: ghcr.io/genudine/saerro/api:latest
     pull_policy: always
     ports:
-      - 80:8000
+      - 8000:80
     links:
       - redis
     restart: always
     environment:
-      - REDIS_ADDR=redis://redis:6379
+      - REDIS_HOST=redis
       - ROCKET_ADDRESS=0.0.0.0
   
   ws_pc:
