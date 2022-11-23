@@ -21,7 +21,21 @@ fn cmd_prune() {
 
     let keys: Vec<String> = con.keys("wp:*").unwrap();
     for key in keys {
-        println!("-> Pruning {}", key);
+        println!("-> Pruning world pop {}", key);
+        let removed_items: u64 = con.zrembyscore(key, 0, prune_after).unwrap();
+        println!("==> Removed {} items", removed_items);
+    }
+
+    let keys: Vec<String> = con.keys("v:*").unwrap();
+    for key in keys {
+        println!("-> Pruning vehicle {}", key);
+        let removed_items: u64 = con.zrembyscore(key, 0, prune_after).unwrap();
+        println!("==> Removed {} items", removed_items);
+    }
+
+    let keys: Vec<String> = con.keys("c:*").unwrap();
+    for key in keys {
+        println!("-> Pruning class {}", key);
         let removed_items: u64 = con.zrembyscore(key, 0, prune_after).unwrap();
         println!("==> Removed {} items", removed_items);
     }

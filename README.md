@@ -65,8 +65,10 @@ This API only supports GET, and supports CORS.
 ## Architecture
 
 - Websocket processors
-  - One per PC, PS4US, PS4EU
-  - Connects to [wss://push.nanite-systems.net](https://nanite-systems.net), one process per "environment"
+  - A pair per PC, PS4US, PS4EU
+  - Connects to [wss://push.nanite-systems.net](https://nanite-systems.net) and Census Websocket
+  - Primary will connect to NS.
+  - Backup will connect to Census. It will wait for 60 seconds before deciding the primary is dead, and then start processing events.
 - API
   - Serves https://saerro.harasse.rs
 - Redis

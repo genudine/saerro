@@ -14,9 +14,10 @@ services:
     image: ghcr.io/genudine/saerro/api:latest
     pull_policy: always
     ports:
-      - 8000:8000
+      - 80:8000
     links:
       - redis
+    restart: always
     environment:
       - REDIS_ADDR=redis://redis:6379
       - ROCKET_ADDRESS=0.0.0.0
@@ -24,30 +25,79 @@ services:
   ws_pc:
     image: ghcr.io/genudine/saerro/websocket:latest
     pull_policy: always
+    restart: always
     environment:
       REDIS_ADDR: redis://redis:6379
       WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2&service-id=s:saegd
       WORLDS: 1,10,13,17,19,40
+      PAIR: pc
+      ROLE: primary
+    links:
+      - redis
+  
+  ws_pc_backup:
+    image: ghcr.io/genudine/saerro/websocket:latest
+    pull_policy: always
+    restart: always
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      WS_ADDR: wss://push.planetside2.com/streaming?environment=ps2&service-id=s:saegd
+      WORLDS: 1,10,13,17,19,40
+      PAIR: pc
+      ROLE: backup
     links:
       - redis
   
   ws_ps4us:
     image: ghcr.io/genudine/saerro/websocket:latest
     pull_policy: always
+    restart: always
     environment:
       REDIS_ADDR: redis://redis:6379
       WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2ps4us&service-id=s:saegd
       WORLDS: 1000
+      PAIR: ps4us
+      ROLE: primary
     links:
       - redis
+
+  ws_ps4us_backup:
+    image: ghcr.io/genudine/saerro/websocket:latest
+    pull_policy: always
+    restart: always
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      WS_ADDR: wss://push.planetside2.com/streaming?environment=ps2ps4us&service-id=s:saegd
+      WORLDS: 1000
+      PAIR: ps4us
+      ROLE: backup
+    links:
+      - redis
+
 
   ws_ps4eu:
     image: ghcr.io/genudine/saerro/websocket:latest
     pull_policy: always
+    restart: always
     environment:
       REDIS_ADDR: redis://redis:6379
       WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2ps4eu&service-id=s:saegd
       WORLDS: 2000
+      PAIR: ps4eu
+      ROLE: primary
+    links:
+      - redis
+  
+  ws_ps4eu_backup:
+    image: ghcr.io/genudine/saerro/websocket:latest
+    pull_policy: always
+    restart: always
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      WS_ADDR: wss://push.planetside2.com/streaming?environment=ps2ps4eu&service-id=s:saegd
+      WORLDS: 2000
+      PAIR: ps4eu
+      ROLE: backup
     links:
       - redis
   
