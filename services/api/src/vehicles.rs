@@ -33,6 +33,7 @@ struct Vehicles {
     chimera: u32,
     javelin: u32,
     corsair: u32,
+    magrider: u32,
 }
 
 #[get("/w/<world_id>/vehicles")]
@@ -66,7 +67,7 @@ pub async fn get_vehicles(world_id: String, mut con: Connection<RedisPool>) -> s
         galaxy,
         valkyrie,
         liberator,
-        ant,
+        ant
     ): (u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32, u32) = pipe()
         .zcount(
             format!("v:{}/{}", world_id, "flash"),
@@ -132,7 +133,7 @@ pub async fn get_vehicles(world_id: String, mut con: Connection<RedisPool>) -> s
         .await
         .unwrap();
 
-    let (harasser, dervish, chimera, javelin, corsair): (u32, u32, u32, u32, u32) = pipe()
+    let (harasser, dervish, chimera, javelin, corsair, magrider): (u32, u32, u32, u32, u32, u32) = pipe()
         .zcount(
             format!("v:{}/{}", world_id, "harasser"),
             filter_timestamp,
@@ -158,6 +159,11 @@ pub async fn get_vehicles(world_id: String, mut con: Connection<RedisPool>) -> s
             filter_timestamp,
             "+inf",
         )
+        .zcount(
+            format!("v:{}/{}", world_id, "magrider"),
+            filter_timestamp,
+            "+inf",
+        )
         .query_async(&mut *con)
         .await
         .unwrap();
@@ -178,7 +184,8 @@ pub async fn get_vehicles(world_id: String, mut con: Connection<RedisPool>) -> s
         + dervish
         + chimera
         + javelin
-        + corsair;
+        + corsair
+        + magrider;
 
     let response = VehiclesCounts {
         world_id,
@@ -201,6 +208,7 @@ pub async fn get_vehicles(world_id: String, mut con: Connection<RedisPool>) -> s
             chimera,
             javelin,
             corsair,
+            magrider
         },
     };
 
