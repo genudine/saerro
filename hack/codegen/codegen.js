@@ -22,6 +22,7 @@ const vehicles_hashmap = async () => {
     "chimera",
     "javelin",
     "corsair",
+    "magrider",
   ];
 
   const matcher = new RegExp(`\\b${relevantVehicles.join("|")}\\b`, "i");
