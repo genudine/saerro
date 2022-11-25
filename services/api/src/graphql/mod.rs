@@ -6,6 +6,44 @@ use rocket::response::content::RawHtml;
 
 pub mod types;
 
+pub struct Query;
+
+#[graphql_object(context = Context)]
+impl Query {
+    fn world(id: ID) -> FieldResult<Option<World>> {
+        Ok(Some(World { id }))
+    }
+
+    fn allWorlds() -> FieldResult<Vec<World>> {
+        Ok(vec![
+            World {
+                id: ID::from("1".to_string()),
+            },
+            World {
+                id: ID::from("10".to_string()),
+            },
+            World {
+                id: ID::from("13".to_string()),
+            },
+            World {
+                id: ID::from("17".to_string()),
+            },
+            World {
+                id: ID::from("19".to_string()),
+            },
+            World {
+                id: ID::from("40".to_string()),
+            },
+            World {
+                id: ID::from("1000".to_string()),
+            },
+            World {
+                id: ID::from("2000".to_string()),
+            },
+        ])
+    }
+}
+
 pub struct Context {
     con: RedisPool,
 }
@@ -38,15 +76,6 @@ pub async fn get_graphql(
     con: &RedisPool,
 ) -> juniper_rocket::GraphQLResponse {
     query.execute(&*schema, &Context { con: con.clone() }).await
-}
-
-pub struct Query;
-
-#[graphql_object(context = Context)]
-impl Query {
-    fn world(id: ID) -> FieldResult<Option<World>> {
-        Ok(Some(World { id }))
-    }
 }
 
 pub type Schema = juniper::RootNode<
