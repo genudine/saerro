@@ -1,5 +1,6 @@
 pub mod classes;
 pub mod cors;
+pub mod graphql;
 pub mod population;
 pub mod redispool;
 pub mod vehicles;
@@ -10,17 +11,10 @@ use rocket::{error, Build, Rocket};
 use rocket_db_pools::deadpool_redis::redis::{cmd, pipe};
 use rocket_db_pools::{Connection, Database};
 
-use serde::{Deserialize, Serialize};
-
 #[macro_use]
 extern crate rocket;
 #[macro_use]
 extern crate serde_json;
-
-#[derive(Serialize, Deserialize)]
-struct IncomingHeaders {
-    host: String,
-}
 
 fn hello_world(host: String, world_id: &str) -> serde_json::Value {
     json!({
@@ -99,6 +93,7 @@ fn rocket() -> Rocket<Build> {
             }
             rocket
         }))
+        .manage(graphql::schema())
         .mount(
             "/",
             routes![
@@ -107,6 +102,15 @@ fn rocket() -> Rocket<Build> {
                 population::get_world_pop,
                 vehicles::get_vehicles,
                 classes::get_classes,
+            ],
+        )
+        .mount(
+            "/graphql",
+            routes![
+                graphql::graphiql,
+                graphql::playground,
+                graphql::get_graphql,
+                graphql::post_graphql
             ],
         )
 }

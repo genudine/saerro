@@ -8,17 +8,17 @@ use crate::redispool::RedisPool;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Factions {
-    tr: u32,
-    nc: u32,
-    vs: u32,
-    ns: u32,
+    pub tr: i32,
+    pub nc: i32,
+    pub vs: i32,
+    pub ns: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WorldPopulation {
-    world_id: u32,
-    total: u32,
-    factions: Factions,
+    world_id: i32,
+    pub total: i32,
+    pub factions: Factions,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -28,28 +28,30 @@ pub struct MultipleWorldPopulation {
 
 #[get("/w/<world_id>")]
 pub async fn get_world_pop(world_id: String, mut con: Connection<RedisPool>) -> serde_json::Value {
+    json!(fetch_world_pop(world_id, &mut con).await)
+}
+
+pub async fn fetch_world_pop(world_id: String, con: &mut Connection<RedisPool>) -> WorldPopulation {
     let filter_timestamp = SystemTime::now()
         .sub(time::Duration::from_secs(60 * 15))
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs();
 
-    let (vs, nc, tr, ns): (u32, u32, u32, u32) = pipe()
+    let (vs, nc, tr, ns): (i32, i32, i32, i32) = pipe()
         .zcount(format!("wp:{}/{}", world_id, 1), filter_timestamp, "+inf")
         .zcount(format!("wp:{}/{}", world_id, 2), filter_timestamp, "+inf")
         .zcount(format!("wp:{}/{}", world_id, 3), filter_timestamp, "+inf")
         .zcount(format!("wp:{}/{}", world_id, 4), filter_timestamp, "+inf")
-        .query_async(&mut *con)
+        .query_async(&mut **con)
         .await
         .unwrap();
 
     let total = tr + vs + nc;
 
-    let response = WorldPopulation {
+    WorldPopulation {
         world_id: world_id.parse().unwrap(),
         total,
         factions: Factions { tr, nc, vs, ns },
-    };
-
-    json!(response)
+    }
 }

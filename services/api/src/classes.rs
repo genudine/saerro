@@ -1,11 +1,10 @@
+use crate::redispool::RedisPool;
 use core::time;
 use rocket_db_pools::deadpool_redis::redis::{pipe, AsyncCommands};
 use rocket_db_pools::Connection;
 use serde::{Deserialize, Serialize};
 use std::ops::Sub;
 use std::time::SystemTime;
-
-use crate::redispool::RedisPool;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ClassCounts {
@@ -14,13 +13,13 @@ struct ClassCounts {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Classes {
-    light_assault: u32,
-    engineer: u32,
-    combat_medic: u32,
-    heavy_assault: u32,
-    infiltrator: u32,
-    max: u32,
+pub struct Classes {
+    light_assault: i32,
+    engineer: i32,
+    combat_medic: i32,
+    heavy_assault: i32,
+    infiltrator: i32,
+    max: i32,
 }
 
 #[get("/w/<world_id>/classes")]
@@ -34,21 +33,36 @@ pub async fn get_classes(world_id: String, mut con: Connection<RedisPool>) -> se
         Err(_) => {}
     }
 
+    let classes = fetch_classes(world_id.clone(), &mut con).await;
+
+    // I hate this but it's fast???
+    // The type only allows 12 at a time.
+
+    let response = ClassCounts { world_id, classes };
+
+    let out = json!(response);
+
+    con.set_ex::<String, String, ()>(cache_key, out.to_string(), 5)
+        .await
+        .unwrap();
+
+    out
+}
+
+pub async fn fetch_classes(world_id: String, con: &mut Connection<RedisPool>) -> Classes {
     let filter_timestamp = SystemTime::now()
         .sub(time::Duration::from_secs(60 * 15))
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap()
         .as_secs();
 
-    // I hate this but it's fast???
-    // The type only allows 12 at a time.
     let (light_assault, engineer, combat_medic, heavy_assault, infiltrator, max): (
-        u32,
-        u32,
-        u32,
-        u32,
-        u32,
-        u32,
+        i32,
+        i32,
+        i32,
+        i32,
+        i32,
+        i32,
     ) = pipe()
         .zcount(
             format!("c:{}/{}", world_id, "light_assault"),
@@ -80,27 +94,16 @@ pub async fn get_classes(world_id: String, mut con: Connection<RedisPool>) -> se
             filter_timestamp,
             "+inf",
         )
-        .query_async(&mut *con)
+        .query_async(&mut **con)
         .await
         .unwrap();
 
-    let response = ClassCounts {
-        world_id,
-        classes: Classes {
-            light_assault,
-            engineer,
-            combat_medic,
-            heavy_assault,
-            infiltrator,
-            max,
-        },
-    };
-
-    let out = json!(response);
-
-    con.set_ex::<String, String, ()>(cache_key, out.to_string(), 5)
-        .await
-        .unwrap();
-
-    out
+    Classes {
+        light_assault,
+        engineer,
+        combat_medic,
+        heavy_assault,
+        infiltrator,
+        max,
+    }
 }
