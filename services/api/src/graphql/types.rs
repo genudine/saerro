@@ -67,6 +67,12 @@ impl World {
             world_id: self.id.clone(),
         }
     }
+
+    pub async fn classes(&self) -> Classes {
+        Classes {
+            world_id: self.id.clone(),
+        }
+    }
 }
 
 pub struct FactionPopulation {
