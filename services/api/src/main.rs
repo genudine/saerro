@@ -30,6 +30,7 @@ fn hello(host: String) -> serde_json::Value {
         "@GitHub": "https://github.com/genudine/saerro",
         "@Disclaimer": "Genudine Dynamics is not responsible for any damages caused by this software. Use at your own risk.",
         "@Support": "#api-dev in https://discord.com/servers/planetside-2-community-251073753759481856",
+        "GraphQL": format!("https://{}/graphql", host),
         "Worlds": {
             "Connery": hello_world(host.clone(), "1"),
             "Miller": hello_world(host.clone(), "10"),
