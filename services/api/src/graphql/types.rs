@@ -275,3 +275,85 @@ impl Classes {
             .await
     }
 }
+
+#[derive(juniper::GraphQLEnum)]
+enum WebsocketState {
+    #[graphql(
+        description = "Using Nanite Systems manifold. This is the best possible running state."
+    )]
+    Primary,
+
+    #[graphql(
+        description = "Using backup Daybreak Games manifold. This means the primary socket hasn't recieved events for at least 60 seconds."
+    )]
+    Backup,
+
+    #[graphql(description = "Both event processors are down. This is bad.")]
+    Down,
+}
+
+#[derive(juniper::GraphQLEnum)]
+enum UpDown {
+    #[graphql(description = "Checks have passed.")]
+    Up,
+
+    #[graphql(description = "Checks have failed. This is bad.")]
+    Down,
+}
+
+pub struct Health {}
+
+impl Health {
+    async fn get_heartbeat(context: &super::Context, pair: &str) -> WebsocketState {
+        let mut con = (*context).con.get().await.unwrap();
+
+        let res: Result<i32, _> = cmd("GET")
+            .arg(format!("heartbeat:{}:primary", pair))
+            .query_async(&mut *con)
+            .await;
+        match res {
+            Ok(_) => WebsocketState::Primary,
+            Err(_) => {
+                let res: Result<i32, _> = cmd("GET")
+                    .arg(format!("heartbeat:{}:backup", pair))
+                    .query_async(&mut con)
+                    .await;
+                match res {
+                    Ok(_) => WebsocketState::Backup,
+                    Err(_) => WebsocketState::Down,
+                }
+            }
+        }
+    }
+}
+
+#[graphql_object(context = super::Context)]
+#[graphql(description = "Saerro's self-checks. Down is universally bad.")]
+impl Health {
+    #[graphql(description = "Checks PC event processors for its running state.")]
+    async fn pc(context: &super::Context) -> WebsocketState {
+        Health::get_heartbeat(context, "pc").await
+    }
+
+    #[graphql(description = "Checks PS4 US event processors for its running state.")]
+    async fn ps4us(context: &super::Context) -> WebsocketState {
+        Health::get_heartbeat(context, "ps4us").await
+    }
+
+    #[graphql(description = "Checks PS4 EU event processors for its running state.")]
+    async fn ps4eu(context: &super::Context) -> WebsocketState {
+        Health::get_heartbeat(context, "ps4eu").await
+    }
+
+    #[graphql(description = "Is our datastore working?")]
+    async fn redis(context: &super::Context) -> UpDown {
+        let mut con = (*context).con.get().await.unwrap();
+
+        let res: Result<String, _> = cmd("PING").query_async(&mut con).await;
+
+        match res {
+            Ok(_) => UpDown::Up,
+            Err(_) => UpDown::Down,
+        }
+    }
+}

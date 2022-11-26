@@ -1,7 +1,7 @@
 use crate::redispool::RedisPool;
 
-use self::types::World;
-use juniper::{graphql_object, FieldResult, ID};
+use self::types::{Health, World};
+use juniper::{graphql_object, meta::Field, FieldResult, ID};
 use rocket::response::content::RawHtml;
 
 pub mod types;
@@ -59,6 +59,10 @@ impl Query {
         Ok(World {
             id: ID::from(id.to_string()),
         })
+    }
+
+    fn health() -> FieldResult<Health> {
+        Ok(Health {})
     }
 }
 

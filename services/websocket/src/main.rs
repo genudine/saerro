@@ -120,14 +120,16 @@ async fn track_class(class_event: ClassEvent) {
 fn should_process_event() -> bool {
     let mut con = REDIS_CLIENT.get_connection().unwrap();
     let role: String = ROLE.parse().unwrap();
-    let heartbeat_key = format!("heartbeat:{}", PAIR.to_string());
+
+    let heartbeat_key = format!("heartbeat:{}:{}", PAIR.to_string(), role);
+    let _: () = con.set_ex(heartbeat_key, "1", 60).unwrap();
 
     if role == "primary" {
-        let _: () = con.set_ex(heartbeat_key, "1", 60).unwrap();
         return false;
     }
 
-    match con.get(heartbeat_key) {
+    let primary_heartbeat_key = format!("heartbeat:{}:primary", PAIR.to_string());
+    match con.get(primary_heartbeat_key) {
         Ok(1) => true,
         _ => false,
     }
