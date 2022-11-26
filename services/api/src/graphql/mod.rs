@@ -10,8 +10,8 @@ pub struct Query;
 
 #[graphql_object(context = Context)]
 impl Query {
-    fn world(id: ID) -> FieldResult<Option<World>> {
-        Ok(Some(World { id }))
+    fn world(id: ID) -> FieldResult<World> {
+        Ok(World { id })
     }
 
     fn allWorlds() -> FieldResult<Vec<World>> {
@@ -41,6 +41,24 @@ impl Query {
                 id: ID::from("2000".to_string()),
             },
         ])
+    }
+
+    fn worldByName(name: String) -> FieldResult<World> {
+        let id = match name.to_lowercase().as_str() {
+            "connery" => "1",
+            "niller" => "10",
+            "cobalt" => "13",
+            "emerald" => "17",
+            "jaeger" => "19",
+            "soltech" => "40",
+            "genudine" => "1000",
+            "ceres" => "2000",
+            _ => "1",
+        };
+
+        Ok(World {
+            id: ID::from(id.to_string()),
+        })
     }
 }
 
