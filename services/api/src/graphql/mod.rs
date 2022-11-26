@@ -46,7 +46,7 @@ impl Query {
     fn worldByName(name: String) -> FieldResult<World> {
         let id = match name.to_lowercase().as_str() {
             "connery" => "1",
-            "niller" => "10",
+            "miller" => "10",
             "cobalt" => "13",
             "emerald" => "17",
             "jaeger" => "19",
