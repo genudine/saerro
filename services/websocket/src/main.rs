@@ -74,6 +74,8 @@ async fn track_pop(pop_event: PopEvent) {
     } = pop_event;
 
     let key = format!("wp:{}/{}", world_id, team_id);
+    let _: () = con.zadd(key, character_id.clone(), timestamp).unwrap();
+    let key = format!("wp:{}", world_id);
     let _: () = con.zadd(key, character_id, timestamp).unwrap();
 }
 

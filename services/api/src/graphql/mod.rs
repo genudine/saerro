@@ -10,35 +10,37 @@ pub struct Query;
 
 #[graphql_object(context = Context)]
 impl Query {
-    fn world(id: ID) -> FieldResult<World> {
-        Ok(World { id })
+    fn world(id: String) -> FieldResult<World> {
+        Ok(World {
+            world_id: id.clone(),
+        })
     }
 
     fn allWorlds() -> FieldResult<Vec<World>> {
         Ok(vec![
             World {
-                id: ID::from("1".to_string()),
+                world_id: "1".to_string(),
             },
             World {
-                id: ID::from("10".to_string()),
+                world_id: "10".to_string(),
             },
             World {
-                id: ID::from("13".to_string()),
+                world_id: "13".to_string(),
             },
             World {
-                id: ID::from("17".to_string()),
+                world_id: "17".to_string(),
             },
             World {
-                id: ID::from("19".to_string()),
+                world_id: "19".to_string(),
             },
             World {
-                id: ID::from("40".to_string()),
+                world_id: "40".to_string(),
             },
             World {
-                id: ID::from("1000".to_string()),
+                world_id: "1000".to_string(),
             },
             World {
-                id: ID::from("2000".to_string()),
+                world_id: "2000".to_string(),
             },
         ])
     }
@@ -57,7 +59,7 @@ impl Query {
         };
 
         Ok(World {
-            id: ID::from(id.to_string()),
+            world_id: id.to_string(),
         })
     }
 

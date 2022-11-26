@@ -22,21 +22,24 @@ static WORLD_ID_TO_NAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
 
 #[derive(Clone, Debug)]
 pub struct World {
-    pub id: juniper::ID,
+    pub world_id: String,
 }
 
 #[graphql_object(context = super::Context)]
 impl World {
+    pub fn id(&self) -> juniper::ID {
+        juniper::ID::from(self.world_id.clone())
+    }
     pub fn name(&self) -> String {
         WORLD_ID_TO_NAME
-            .get(&self.id.to_string().as_str())
+            .get(&self.world_id.to_string().as_str())
             .unwrap_or(&"Unknown")
             .to_string()
     }
 
     pub async fn population(&self, context: &mut super::Context) -> i32 {
         let mut con = (*context).con.get().await.unwrap();
-        let id = self.id.to_string();
+        let id = self.world_id.to_string();
 
         let filter_timestamp = SystemTime::now()
             .sub(Duration::from_secs(60 * 15))
@@ -44,33 +47,32 @@ impl World {
             .unwrap()
             .as_secs();
 
-        let (vs, nc, tr, ns): (i32, i32, i32, i32) = pipe()
-            .zcount(format!("wp:{}/{}", id, 1), filter_timestamp, "+inf")
-            .zcount(format!("wp:{}/{}", id, 2), filter_timestamp, "+inf")
-            .zcount(format!("wp:{}/{}", id, 3), filter_timestamp, "+inf")
-            .zcount(format!("wp:{}/{}", id, 4), filter_timestamp, "+inf")
+        let pop: u32 = cmd("ZCOUNT")
+            .arg(format!("wp:{}", id))
+            .arg(filter_timestamp)
+            .arg("+inf")
             .query_async(&mut con)
             .await
             .unwrap();
 
-        tr + vs + nc + ns
+        pop as i32
     }
 
     pub async fn faction_population(&self) -> FactionPopulation {
         FactionPopulation {
-            world_id: self.id.clone(),
+            world_id: juniper::ID::from(self.world_id.clone()),
         }
     }
 
     pub async fn vehicles(&self) -> Vehicles {
         Vehicles {
-            world_id: self.id.clone(),
+            world_id: juniper::ID::from(self.world_id.clone()),
         }
     }
 
     pub async fn classes(&self) -> Classes {
         Classes {
-            world_id: self.id.clone(),
+            world_id: juniper::ID::from(self.world_id.clone()),
         }
     }
 }
