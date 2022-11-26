@@ -53,7 +53,7 @@ impl Query {
             "soltech" => "40",
             "genudine" => "1000",
             "ceres" => "2000",
-            _ => "1",
+            _ => "-1",
         };
 
         Ok(World {
