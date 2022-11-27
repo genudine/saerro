@@ -1,7 +1,7 @@
 use crate::redispool::RedisPool;
 
 use self::types::{Health, World};
-use juniper::{graphql_object, meta::Field, FieldResult, ID};
+use juniper::{graphql_object, FieldResult};
 use rocket::response::content::RawHtml;
 
 pub mod types;

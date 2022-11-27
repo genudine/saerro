@@ -1,6 +1,6 @@
 use juniper::graphql_object;
 use once_cell::sync::Lazy;
-use rocket_db_pools::deadpool_redis::redis::{cmd, pipe};
+use rocket_db_pools::deadpool_redis::redis::cmd;
 use std::{
     collections::HashMap,
     ops::Sub,
