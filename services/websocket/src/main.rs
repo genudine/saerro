@@ -1,6 +1,6 @@
 use futures::{pin_mut, FutureExt};
 use futures_util::StreamExt;
-use once_cell::sync::Lazy;
+use lazy_static::lazy_static;
 use redis::Commands;
 use serde::Deserialize;
 use serde_json::json;
@@ -9,14 +9,17 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 mod translators;
 
-pub static REDIS_CLIENT: Lazy<redis::Client> = Lazy::new(|| {
-    redis::Client::open(std::env::var("REDIS_ADDR").unwrap_or("redis://localhost:6379".to_string()))
-        .unwrap()
-});
-
-static PAIR: Lazy<String> = Lazy::new(|| env::var("PAIR").unwrap_or_default());
-static ROLE: Lazy<String> = Lazy::new(|| env::var("ROLE").unwrap_or("primary".to_string()));
-static WS_ADDR: Lazy<String> = Lazy::new(|| env::var("WS_ADDR").unwrap_or_default());
+lazy_static! {
+    static ref REDIS_CLIENT: redis::Client = redis::Client::open(format!(
+        "redis://{}:{}",
+        std::env::var("REDIS_HOST").unwrap_or("localhost".to_string()),
+        std::env::var("REDIS_PORT").unwrap_or("6379".to_string()),
+    ))
+    .unwrap();
+    static ref PAIR: String = env::var("PAIR").unwrap_or_default();
+    static ref ROLE: String = env::var("ROLE").unwrap_or("primary".to_string());
+    static ref WS_ADDR: String = env::var("WS_ADDR").unwrap_or_default();
+}
 
 async fn send_init(tx: futures::channel::mpsc::UnboundedSender<Message>) {
     let worlds_raw = env::var("WORLDS").unwrap_or_default();

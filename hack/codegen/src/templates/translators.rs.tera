@@ -1,13 +1,17 @@
 // GENERATED CODE -- Do not edit. Run `cargo run --bin codegen` to regenerate.
 
-use once_cell::sync::Lazy;
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-static VEHICLE_TO_NAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
-    HashMap::from([
+lazy_static! {
+    static ref VEHICLE_TO_NAME: HashMap<&'static str, &'static str> = HashMap::from([
         {% for vehicle in vehicles %}("{{ vehicle.vehicle_id }}", "{{ vehicle.name.en }}"),{% endfor %}
-    ])
-});
+    ]);
+
+    static ref LOADOUT_TO_CLASS: HashMap<&'static str, &'static str> = HashMap::from([
+        {% for class in classes %}("{{ class.loadout_id }}", "{{ class.code_name }}"),{% endfor %}
+    ]);
+}
 
 pub fn vehicle_to_name(vehicle_id: &str) -> String {
     match VEHICLE_TO_NAME.get(&vehicle_id) {
@@ -15,12 +19,6 @@ pub fn vehicle_to_name(vehicle_id: &str) -> String {
         None => "unknown".to_string(),
     }
 }
-
-static LOADOUT_TO_CLASS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
-    HashMap::from([
-        {% for class in classes %}("{{ class.loadout_id }}", "{{ class.code_name }}"),{% endfor %}
-    ])
-});
 
 pub fn loadout_to_class(loadout_id: &str) -> String {
     match LOADOUT_TO_CLASS.get(&loadout_id) {

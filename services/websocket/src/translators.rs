@@ -1,10 +1,10 @@
 // GENERATED CODE -- Do not edit. Run `cargo run --bin codegen` to regenerate.
 
-use once_cell::sync::Lazy;
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-static VEHICLE_TO_NAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
-    HashMap::from([
+lazy_static! {
+    static ref VEHICLE_TO_NAME: HashMap<&'static str, &'static str> = HashMap::from([
         ("1", "flash"),
         ("2", "sunderer"),
         ("3", "lightning"),
@@ -48,18 +48,8 @@ static VEHICLE_TO_NAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
         ("2136", "dervish"),
         ("2137", "chimera"),
         ("2142", "corsair"),
-    ])
-});
-
-pub fn vehicle_to_name(vehicle_id: &str) -> String {
-    match VEHICLE_TO_NAME.get(&vehicle_id) {
-        Some(name) => name.to_string(),
-        None => "unknown".to_string(),
-    }
-}
-
-static LOADOUT_TO_CLASS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
-    HashMap::from([
+    ]);
+    static ref LOADOUT_TO_CLASS: HashMap<&'static str, &'static str> = HashMap::from([
         ("1", "infiltrator"),
         ("3", "light_assault"),
         ("4", "combat_medic"),
@@ -84,8 +74,15 @@ static LOADOUT_TO_CLASS: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
         ("31", "engineer"),
         ("32", "heavy_assault"),
         ("45", "max"),
-    ])
-});
+    ]);
+}
+
+pub fn vehicle_to_name(vehicle_id: &str) -> String {
+    match VEHICLE_TO_NAME.get(&vehicle_id) {
+        Some(name) => name.to_string(),
+        None => "unknown".to_string(),
+    }
+}
 
 pub fn loadout_to_class(loadout_id: &str) -> String {
     match LOADOUT_TO_CLASS.get(&loadout_id) {

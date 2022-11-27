@@ -1,91 +1,102 @@
-pub mod cors;
-pub mod graphql;
-pub mod redispool;
+mod classes;
+mod health;
+mod query;
+mod util;
+mod vehicles;
+mod world;
 
-use redispool::RedisPool;
-use rocket::fairing::AdHoc;
-use rocket::response::content::RawHtml;
-use rocket::response::status;
-use rocket::{error, Build, Rocket};
-use rocket_db_pools::deadpool_redis::redis::{cmd, pipe};
-use rocket_db_pools::{Connection, Database};
+use async_graphql::{
+    extensions::ApolloTracing,
+    http::{playground_source, GraphQLPlaygroundConfig},
+    EmptyMutation, EmptySubscription, Request, Response, Schema,
+};
+use axum::{
+    extract::Query,
+    http::Method,
+    response::{Html, IntoResponse, Redirect},
+    routing::{get, post},
+    Extension, Json, Router,
+};
+use std::net::SocketAddr;
+use tower_http::cors::{Any, CorsLayer};
 
-#[macro_use]
-extern crate rocket;
 #[macro_use]
 extern crate serde_json;
 
-#[get("/")]
-async fn index() -> RawHtml<String> {
-    RawHtml(include_str!("html/index.html").to_string())
+async fn index() -> Html<&'static str> {
+    Html(include_str!("html/index.html"))
 }
 
-#[get("/health")]
-async fn health(
-    mut con: Connection<RedisPool>,
-) -> Result<serde_json::Value, status::Custom<serde_json::Value>> {
-    let (ping, pc, ps4us, ps4eu): (String, bool, bool, bool) = pipe()
-        .cmd("PING")
-        .get("heartbeat:pc")
-        .get("heartbeat:ps4us")
-        .get("heartbeat:ps4eu")
-        .query_async(&mut *con)
-        .await
-        .unwrap_or_default();
+async fn handle_404() -> Html<&'static str> {
+    Html(include_str!("html/404.html"))
+}
 
-    if ping != "PONG" {
-        return Err(status::Custom(
-            rocket::http::Status::ServiceUnavailable,
-            json!({
-                "status": "error",
-                "message": "Redis is not responding",
-            }),
-        ));
+async fn graphql_handler_post(
+    Extension(schema): Extension<Schema<query::Query, EmptyMutation, EmptySubscription>>,
+    Json(query): Json<Request>,
+) -> Json<Response> {
+    Json(schema.execute(query).await)
+}
+
+async fn graphql_handler_get(
+    Extension(schema): Extension<Schema<query::Query, EmptyMutation, EmptySubscription>>,
+    query: Query<Request>,
+) -> axum::response::Response {
+    match query.operation_name {
+        Some(_) => Json(schema.execute(query.0).await).into_response(),
+        None => Redirect::to("/graphql/playground").into_response(),
     }
-
-    Ok(json!({
-        "status": if ping == "PONG" && pc && ps4us && ps4eu { "ok" } else { "degraded" },
-        "redis": ping == "PONG",
-        "pc": if pc { "primary" } else { "backup/down" },
-        "ps4us": if ps4us { "primary" } else { "backup/down" },
-        "ps4eu": if ps4eu { "primary" } else { "backup/down" },
-    }))
+}
+async fn graphql_playground() -> impl IntoResponse {
+    Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
-#[launch]
-fn rocket() -> Rocket<Build> {
-    let figment = rocket::Config::figment().merge((
-        "databases.redis.url",
-        format!(
-            "redis://{}:{}",
-            std::env::var("REDIS_HOST").unwrap_or("localhost".to_string()),
-            std::env::var("REDIS_PORT").unwrap_or("6379".to_string()),
-        ),
-    ));
+#[tokio::main]
+async fn main() {
+    let redis_url = format!(
+        "redis://{}:{}",
+        std::env::var("REDIS_HOST").unwrap_or("localhost".to_string()),
+        std::env::var("REDIS_PORT").unwrap_or("6379".to_string()),
+    );
 
-    rocket::build()
-        .configure(figment)
-        .attach(cors::CORS)
-        .attach(RedisPool::init())
-        .attach(AdHoc::on_ignite("Redis Check", |rocket| async move {
-            if let Some(pool) = RedisPool::fetch(&rocket) {
-                let mut con = pool.get().await.unwrap();
-                let _: () = cmd("PING").query_async(&mut con).await.unwrap();
-            } else {
-                error!("Redis connection failed");
-            }
-            rocket
-        }))
-        .manage(graphql::schema())
-        .mount("/", routes![index, health,])
-        .mount(
+    let redis = redis::Client::open(redis_url)
+        .unwrap()
+        .get_multiplexed_tokio_connection()
+        .await
+        .unwrap();
+
+    let schema = Schema::build(query::Query, EmptyMutation, EmptySubscription)
+        .data(redis.clone())
+        .extension(ApolloTracing)
+        .finish();
+
+    let app = Router::new()
+        .route("/", get(index))
+        .route("/health", get(health::get_health))
+        .route(
             "/graphql",
-            routes![
-                graphql::graphiql,
-                graphql::playground,
-                graphql::playground2,
-                graphql::get_graphql,
-                graphql::post_graphql
-            ],
+            post(graphql_handler_post).get(graphql_handler_get),
         )
+        .route("/graphql/playground", get(graphql_playground))
+        .fallback(handle_404)
+        .layer(Extension(redis))
+        .layer(Extension(schema))
+        .layer(CorsLayer::new().allow_origin(Any).allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::OPTIONS,
+        ]));
+
+    let port: u16 = std::env::var("PORT")
+        .unwrap_or("8000".to_string())
+        .parse()
+        .unwrap();
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+
+    println!("Listening on http://{}", addr);
+
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
