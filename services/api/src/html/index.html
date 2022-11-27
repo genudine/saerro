@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<title>Saerro Listening Post</title>
+<meta charset="utf-8" />
+<style>
+  body {
+    font-family: monospace;
+    background-color: #010101;
+    color: #e0e0e0;
+    font-size: 1.25rem;
+    line-height: 1.6;
+  }
+
+  a {
+    color: #cead42;
+    text-decoration: none;
+  }
+</style>
+
+<h1>Saerro Listening Post</h1>
+<h2>Live Population Stats API for PlanetSide 2</h2>
+<ul>
+  <li><a href="/graphql/playground">Check out the GraphQL Playground</a></li>
+  <li>
+    <a
+      href="/graphql?query=%7B%20health%20%7B%20pc%20redis%20ps4us%20ps4eu%20%7D%7D"
+      >Current system status</a
+    >
+    (<a
+      href="/graphql/playground?query=%7B%20health%20%7B%20pc%20redis%20ps4us%20ps4eu%20%7D%7D"
+      >or in playground</a
+    >)
+  </li>
+  <li>
+    <a
+      href="/graphql?query=%7B%0A%20%20allWorlds%20%7B%0A%20%20%20%20name%0A%20%20%20%20population%0A%20%20%7D%0A%7D%0A"
+    >
+      Current population of all worlds
+    </a>
+    (<a
+      href="/graphql/playground?query=%7B%0A%20%20allWorlds%20%7B%0A%20%20%20%20name%0A%20%20%20%20population%0A%20%20%7D%0A%7D%0A"
+      >or in playground</a
+    >)
+  </li>
+</ul>
+<p>
+  All data is an aggregate of the last 15 minutes of Death and VehicleDestroy
+  events, including both attacker and victim.
+</p>
+
+<p>
+  This API is provided by Genudine Dynamics.<br />As always, we take no
+  responsibility for your use of this data... or our weapons. :)
+</p>
+<p>For help, please contact us in #api-dev on the PlanetSide 2 Discord.</p>
+<p>[<a href="https://github.com/genudine/saerro">github</a>]</p>

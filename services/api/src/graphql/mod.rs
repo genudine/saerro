@@ -84,6 +84,11 @@ pub fn playground() -> RawHtml<String> {
     juniper_rocket::playground_source("/graphql", None)
 }
 
+#[get("/playground")]
+pub fn playground2() -> RawHtml<String> {
+    juniper_rocket::playground_source("/graphql", None)
+}
+
 #[post("/", data = "<query>")]
 pub async fn post_graphql(
     query: juniper_rocket::GraphQLRequest,

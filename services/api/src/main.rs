@@ -1,12 +1,11 @@
-pub mod classes;
 pub mod cors;
 pub mod graphql;
-pub mod population;
 pub mod redispool;
-pub mod vehicles;
 
 use redispool::RedisPool;
 use rocket::fairing::AdHoc;
+use rocket::response::content::RawHtml;
+use rocket::response::status;
 use rocket::{error, Build, Rocket};
 use rocket_db_pools::deadpool_redis::redis::{cmd, pipe};
 use rocket_db_pools::{Connection, Database};
@@ -16,42 +15,15 @@ extern crate rocket;
 #[macro_use]
 extern crate serde_json;
 
-fn hello_world(host: String, world_id: &str) -> serde_json::Value {
-    json!({
-        "population": format!("https://{}/w/{}", host, world_id),
-        "vehicles": format!("https://{}/w/{}/vehicles", host, world_id),
-        "classes": format!("https://{}/w/{}/classes", host, world_id),
-    })
-}
-
-fn hello(host: String) -> serde_json::Value {
-    json!({
-        "@": "Saerro Listening Post - PlanetSide 2 Live Population API",
-        "@GitHub": "https://github.com/genudine/saerro",
-        "@Disclaimer": "Genudine Dynamics is not responsible for any damages caused by this software. Use at your own risk.",
-        "@Support": "#api-dev in https://discord.com/servers/planetside-2-community-251073753759481856",
-        "GraphQL": format!("https://{}/graphql", host),
-        "Worlds": {
-            "Connery": hello_world(host.clone(), "1"),
-            "Miller": hello_world(host.clone(), "10"),
-            "Cobalt": hello_world(host.clone(), "13"),
-            "Emerald": hello_world(host.clone(), "17"),
-            "Jaeger": hello_world(host.clone(), "19"),
-            "SolTech": hello_world(host.clone(), "40"),
-            "Genudine": hello_world(host.clone(), "1000"),
-            "Ceres": hello_world(host.clone(), "2000"),
-        },
-        // "All World Population": format!("https://{}/m/?ids=1,10,13,17,19,40,1000,2000", host),
-    })
-}
-
 #[get("/")]
-fn index() -> serde_json::Value {
-    hello("saerro.harasse.rs".to_string())
+async fn index() -> RawHtml<String> {
+    RawHtml(include_str!("html/index.html").to_string())
 }
 
 #[get("/health")]
-async fn health(mut con: Connection<RedisPool>) -> serde_json::Value {
+async fn health(
+    mut con: Connection<RedisPool>,
+) -> Result<serde_json::Value, status::Custom<serde_json::Value>> {
     let (ping, pc, ps4us, ps4eu): (String, bool, bool, bool) = pipe()
         .cmd("PING")
         .get("heartbeat:pc")
@@ -61,13 +33,23 @@ async fn health(mut con: Connection<RedisPool>) -> serde_json::Value {
         .await
         .unwrap_or_default();
 
-    json!({
+    if ping != "PONG" {
+        return Err(status::Custom(
+            rocket::http::Status::ServiceUnavailable,
+            json!({
+                "status": "error",
+                "message": "Redis is not responding",
+            }),
+        ));
+    }
+
+    Ok(json!({
         "status": if ping == "PONG" && pc && ps4us && ps4eu { "ok" } else { "degraded" },
         "redis": ping == "PONG",
         "pc": if pc { "primary" } else { "backup/down" },
         "ps4us": if ps4us { "primary" } else { "backup/down" },
         "ps4eu": if ps4eu { "primary" } else { "backup/down" },
-    })
+    }))
 }
 
 #[launch]
@@ -95,21 +77,13 @@ fn rocket() -> Rocket<Build> {
             rocket
         }))
         .manage(graphql::schema())
-        .mount(
-            "/",
-            routes![
-                index,
-                health,
-                population::get_world_pop,
-                vehicles::get_vehicles,
-                classes::get_classes,
-            ],
-        )
+        .mount("/", routes![index, health,])
         .mount(
             "/graphql",
             routes![
                 graphql::graphiql,
                 graphql::playground,
+                graphql::playground2,
                 graphql::get_graphql,
                 graphql::post_graphql
             ],
