@@ -1,4 +1,4 @@
-// GENERATED CODE -- Do not edit. Run `node hack/codegen/codegen.js > services/websocket/src/translators.rs`  to regenerate.
+// GENERATED CODE -- Do not edit. Run `cargo run --bin codegen` to regenerate.
 
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
@@ -19,11 +19,6 @@ static VEHICLE_TO_NAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
         ("12", "harasser"),
         ("14", "valkyrie"),
         ("15", "ant"),
-        ("100", "ant"),
-        ("101", "ant"),
-        ("102", "ant"),
-        ("150", "ant"),
-        ("151", "ant"),
         ("160", "ant"),
         ("161", "ant"),
         ("162", "ant"),
@@ -37,8 +32,6 @@ static VEHICLE_TO_NAME: Lazy<HashMap<&str, &str>> = Lazy::new(|| {
         ("1010", "liberator"),
         ("1011", "galaxy"),
         ("1105", "vanguard"),
-        ("2006", "ant"),
-        ("2009", "ant"),
         ("2010", "flash"),
         ("2033", "javelin"),
         ("2122", "mosquito"),
