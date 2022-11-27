@@ -26,7 +26,6 @@ lazy_static! {
         ("2000", "Ceres"),
     ]);
 }
-
 pub struct World {
     pub id: String,
 }
@@ -48,6 +47,12 @@ impl World {
     }
 }
 
+/// **A PlanetSide 2 world.**
+///
+/// This can be fetched at the top level with `world(id: "1")` or `worldByName(name: "Connery")`.
+/// ...or get all of them with `allWorlds`.
+///
+/// If World.id is not valid or known to the API, World.name will return "Unknown".
 #[Object]
 impl World {
     async fn id(&self) -> &str {

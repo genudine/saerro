@@ -38,35 +38,48 @@ pub async fn get_health(
 
 #[derive(Enum, Copy, Clone, Eq, PartialEq)]
 enum UpDown {
+    /// The service is up and running
     Up,
+
+    /// The service is down
     Down,
 }
 
 #[derive(Enum, Copy, Clone, Eq, PartialEq)]
 enum WebsocketState {
+    /// The Nanite Systems manifold is sending events, and the primary listener is processing data.
     Primary,
+
+    /// The Daybreak Games manifold is sending events, and the backup listener is processing data; the primary listener is down.
     Backup,
+
+    /// The entire event streaming system is down.
     Down,
 }
 
 pub struct Health {}
 
+/// Reports on the health of Saerro Listening Post
 #[Object]
 impl Health {
+    /// Did a ping to Redis (our main datastore) succeed?
     async fn redis(&self) -> UpDown {
         UpDown::Up
     }
 
+    /// What is the state of the websocket listener cluster for PC?
     #[graphql(name = "pc")]
     async fn pc(&self) -> WebsocketState {
         WebsocketState::Primary
     }
 
+    /// What is the state of the websocket listener cluster for PS4 US?
     #[graphql(name = "ps4us")]
     async fn ps4us(&self) -> WebsocketState {
         WebsocketState::Primary
     }
 
+    /// What is the state of the websocket listener cluster for PS4 EU?
     #[graphql(name = "ps4eu")]
     async fn ps4eu(&self) -> WebsocketState {
         WebsocketState::Primary
