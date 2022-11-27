@@ -4,6 +4,7 @@ ARG SERVICE
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY services ./services
+COPY hack ./hack
 
 RUN cargo build --bin ${SERVICE} --release
 
