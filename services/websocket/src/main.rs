@@ -242,17 +242,23 @@ struct Payload {
     payload: Event,
 }
 
-/// Send a longer heartbeat in case this is PS4EU and gets like one event per hour
-async fn heartbeat() {
-    let mut interval = tokio::time::interval(Duration::from_secs(150));
-    loop {
-        interval.tick().await;
-        let mut con = REDIS_CLIENT.get_connection().unwrap();
-        let role: String = ROLE.parse().unwrap();
-        let heartbeat_key = format!("heartbeat:{}:{}", PAIR.to_string(), role);
-        let _: () = con.set_ex(heartbeat_key, "1", 300).unwrap();
-    }
-}
+// /// Send a longer heartbeat in case this is PS4EU and gets like one event per hour
+// async fn heartbeat() {
+//     let mut interval = tokio::time::interval(Duration::from_secs(150));
+//     loop {
+//         interval.tick().await;
+//         let mut con = REDIS_CLIENT.get_connection().unwrap();
+//         let role: String = ROLE.parse().unwrap();
+//         let heartbeat_key = format!("heartbeat:{}:{}", PAIR.to_string(), role);
+//         let response: Option<String> = con.get(heartbeat_key.clone()).unwrap();
+//         match response {
+//             None => {
+//                 let _: () = con.set_ex(heartbeat_key, "1", 300).unwrap();
+//             }
+//             _ => (),
+//         }
+//     }
+// }
 
 #[tokio::main]
 async fn main() {
@@ -305,7 +311,7 @@ async fn main() {
         _ = fused_writer => {}
     }
 
-    tokio::spawn(heartbeat());
+    // tokio::spawn(heartbeat());
 
     init.await.unwrap();
 }
