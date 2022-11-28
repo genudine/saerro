@@ -17,7 +17,7 @@ use axum::{
     Extension, Json, Router,
 };
 use std::net::SocketAddr;
-use tower_http::cors::{AllowHeaders, Any, CorsLayer};
+use tower_http::cors::{Any, CorsLayer};
 
 #[macro_use]
 extern crate serde_json;

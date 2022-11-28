@@ -4,10 +4,7 @@ use lazy_static::lazy_static;
 use redis::Commands;
 use serde::Deserialize;
 use serde_json::json;
-use std::{
-    env,
-    time::{Duration, SystemTime},
-};
+use std::{env, time::SystemTime};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 mod translators;
