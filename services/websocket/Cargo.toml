@@ -9,8 +9,8 @@ edition = "2021"
 redis = { version = "0.22.1", default_features = false, features = ["r2d2"] }
 lazy_static = "1.4.0"
 tokio-tungstenite = { version = "0.17.2", features=["native-tls"] }
-serde_json = "1.0.88"
-serde = { version = "1.0.147", features = ["derive"] }
+serde_json = "1.0.89"
+serde = { version = "1.0.148", features = ["derive"] }
 tokio = { version = "1.22.0" }
 url = "2.3.1"
 futures-util = "0.3.25"

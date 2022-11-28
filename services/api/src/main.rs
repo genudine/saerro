@@ -6,7 +6,6 @@ mod vehicles;
 mod world;
 
 use async_graphql::{
-    extensions::ApolloTracing,
     http::{playground_source, GraphQLPlaygroundConfig},
     EmptyMutation, EmptySubscription, Request, Response, Schema,
 };
@@ -68,7 +67,6 @@ async fn main() {
 
     let schema = Schema::build(query::Query, EmptyMutation, EmptySubscription)
         .data(redis.clone())
-        .extension(ApolloTracing)
         .finish();
 
     let app = Router::new()

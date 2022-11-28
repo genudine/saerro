@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use async_graphql::{Context, Enum, Object};
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
 use redis::{aio::MultiplexedConnection, pipe};
