@@ -1,6 +1,8 @@
-use async_graphql::{Enum, Object};
+use std::any::Any;
+
+use async_graphql::{Context, Enum, Object};
 use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
-use redis::pipe;
+use redis::{aio::MultiplexedConnection, pipe};
 
 pub async fn get_health(
     Extension(mut redis): Extension<redis::aio::MultiplexedConnection>,
@@ -59,29 +61,56 @@ enum WebsocketState {
 
 pub struct Health {}
 
+impl Health {
+    async fn get_health<'ctx>(&self, ctx: &Context<'ctx>, pair: &str) -> WebsocketState {
+        let mut con = ctx.data::<MultiplexedConnection>().unwrap().to_owned();
+        let (primary, backup): (Option<String>, Option<String>) = pipe()
+            .get(format!("heartbeat:{}:primary", pair))
+            .get(format!("heartbeat:{}:backup", pair))
+            .query_async(&mut con)
+            .await
+            .unwrap();
+
+        match (primary, backup) {
+            (Some(_), _) => WebsocketState::Primary,
+            (None, Some(_)) => WebsocketState::Backup,
+            _ => WebsocketState::Down,
+        }
+    }
+}
+
 /// Reports on the health of Saerro Listening Post
 #[Object]
 impl Health {
     /// Did a ping to Redis (our main datastore) succeed?
-    async fn redis(&self) -> UpDown {
-        UpDown::Up
+    async fn redis<'ctx>(&self, ctx: &Context<'ctx>) -> UpDown {
+        let mut con = ctx.data::<MultiplexedConnection>().unwrap().to_owned();
+        let ping: String = redis::cmd("PING")
+            .query_async(&mut con)
+            .await
+            .unwrap_or_default();
+        if ping == "PONG" {
+            UpDown::Up
+        } else {
+            UpDown::Down
+        }
     }
 
     /// What is the state of the websocket listener cluster for PC?
     #[graphql(name = "pc")]
-    async fn pc(&self) -> WebsocketState {
-        WebsocketState::Primary
+    async fn pc<'ctx>(&self, ctx: &Context<'ctx>) -> WebsocketState {
+        self.get_health(ctx, "pc").await
     }
 
     /// What is the state of the websocket listener cluster for PS4 US?
     #[graphql(name = "ps4us")]
-    async fn ps4us(&self) -> WebsocketState {
-        WebsocketState::Primary
+    async fn ps4us<'ctx>(&self, ctx: &Context<'ctx>) -> WebsocketState {
+        self.get_health(ctx, "ps4us").await
     }
 
     /// What is the state of the websocket listener cluster for PS4 EU?
     #[graphql(name = "ps4eu")]
-    async fn ps4eu(&self) -> WebsocketState {
-        WebsocketState::Primary
+    async fn ps4eu<'ctx>(&self, ctx: &Context<'ctx>) -> WebsocketState {
+        self.get_health(ctx, "ps4eu").await
     }
 }
