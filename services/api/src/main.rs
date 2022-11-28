@@ -11,13 +11,13 @@ use async_graphql::{
 };
 use axum::{
     extract::Query,
-    http::Method,
+    http::{header::CONTENT_TYPE, Method},
     response::{Html, IntoResponse, Redirect},
     routing::{get, post},
     Extension, Json, Router,
 };
 use std::net::SocketAddr;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 
 #[macro_use]
 extern crate serde_json;
@@ -80,11 +80,12 @@ async fn main() {
         .fallback(handle_404)
         .layer(Extension(redis))
         .layer(Extension(schema))
-        .layer(CorsLayer::new().allow_origin(Any).allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::OPTIONS,
-        ]));
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_headers([CONTENT_TYPE])
+                .allow_methods([Method::GET, Method::POST, Method::OPTIONS]),
+        );
 
     let port: u16 = std::env::var("PORT")
         .unwrap_or("8000".to_string())
