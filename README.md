@@ -23,6 +23,7 @@ The main use case is for [Medkit](https://github.com/kayteh/medkit2) bot to have
   - Backup will connect to Census. It will wait for 60 seconds before deciding the primary is dead, and then start processing events.
 - API
   - Serves https://saerro.harasse.rs
+  - Built on axum and async-graphql
 - Redis
   - Using ZADD with score as timestamp, ZCOUNTBYSCORE by timestamp in 15 minute windows, and cleaned up with SCAN+ZREMBYSCORE, population data is tracked.
   - There is deliberately no persistence.

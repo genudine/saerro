@@ -42,10 +42,11 @@ async fn graphql_handler_get(
     Extension(schema): Extension<Schema<query::Query, EmptyMutation, EmptySubscription>>,
     query: Query<Request>,
 ) -> axum::response::Response {
-    match query.operation_name {
-        Some(_) => Json(schema.execute(query.0).await).into_response(),
-        None => Redirect::to("/graphql/playground").into_response(),
+    if query.query == "" {
+        return Redirect::to("/graphql/playground").into_response();
     }
+
+    Json(schema.execute(query.0).await).into_response()
 }
 async fn graphql_playground() -> impl IntoResponse {
     Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
