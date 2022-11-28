@@ -4,7 +4,10 @@ use lazy_static::lazy_static;
 use redis::Commands;
 use serde::Deserialize;
 use serde_json::json;
-use std::{env, time::SystemTime};
+use std::{
+    env,
+    time::{Duration, SystemTime},
+};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 mod translators;
@@ -239,6 +242,18 @@ struct Payload {
     payload: Event,
 }
 
+/// Send a longer heartbeat in case this is PS4EU and gets like one event per hour
+async fn heartbeat() {
+    let mut interval = tokio::time::interval(Duration::from_secs(150));
+    loop {
+        interval.tick().await;
+        let mut con = REDIS_CLIENT.get_connection().unwrap();
+        let role: String = ROLE.parse().unwrap();
+        let heartbeat_key = format!("heartbeat:{}:{}", PAIR.to_string(), role);
+        let _: () = con.set_ex(heartbeat_key, "1", 300).unwrap();
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let addr: String = WS_ADDR.to_string();
@@ -289,6 +304,8 @@ async fn main() {
         _ = fused_reader => {}
         _ = fused_writer => {}
     }
+
+    tokio::spawn(heartbeat());
 
     init.await.unwrap();
 }
