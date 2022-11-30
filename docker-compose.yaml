@@ -2,7 +2,7 @@ version: "3"
 
 services:
   redis:
-    image: redislabs/redistimeseries:1.8.3
+    image: redis
     command: redis-server --save "" --appendonly no
     container_name: redis
     restart: always
