@@ -1,4 +1,5 @@
-# Temporary deployment stuff
+# Temporary deployment stuff.
+# Passwords in this file SHOULD BE CHANGED.
 version: '3.7'
 
 services:
@@ -9,104 +10,34 @@ services:
     restart: always
     ports:
       - 6379:6379
-  
+
+  tsdb:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_PASSWORD: saerro321
+      POSTGRES_USER: saerrouser
+      POSTGRES_DB: data
+    ports:
+      - 5432
+
   api:
     image: ghcr.io/genudine/saerro/api:latest
     pull_policy: always
     ports:
       - 8000:80
     links:
-      - redis
+      - tsdb
     restart: always
     environment:
-      - REDIS_HOST=redis
-      - ROCKET_ADDRESS=0.0.0.0
-  
-  ws_pc:
+      DATABASE_ADDR: postgres://saerrouser:saerro321@tsdb:$TSDB_PORT/data
+
+  ws:
     image: ghcr.io/genudine/saerro/websocket:latest
     pull_policy: always
     restart: always
     environment:
-      REDIS_ADDR: redis://redis:6379
+      DATABASE_ADDR: postgres://saerrouser:saerro321@tsdb:$TSDB_PORT/data
       WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2&service-id=s:saegd
-      WORLDS: 1,10,13,17,19,40
-      PAIR: pc
-      ROLE: primary
+      WORLDS: all
     links:
-      - redis
-  
-  ws_pc_backup:
-    image: ghcr.io/genudine/saerro/websocket:latest
-    pull_policy: always
-    restart: always
-    environment:
-      REDIS_ADDR: redis://redis:6379
-      WS_ADDR: wss://push.planetside2.com/streaming?environment=ps2&service-id=s:saegd
-      WORLDS: 1,10,13,17,19,40
-      PAIR: pc
-      ROLE: backup
-    links:
-      - redis
-  
-  ws_ps4us:
-    image: ghcr.io/genudine/saerro/websocket:latest
-    pull_policy: always
-    restart: always
-    environment:
-      REDIS_ADDR: redis://redis:6379
-      WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2ps4us&service-id=s:saegd
-      WORLDS: 1000
-      PAIR: ps4us
-      ROLE: primary
-    links:
-      - redis
-
-  ws_ps4us_backup:
-    image: ghcr.io/genudine/saerro/websocket:latest
-    pull_policy: always
-    restart: always
-    environment:
-      REDIS_ADDR: redis://redis:6379
-      WS_ADDR: wss://push.planetside2.com/streaming?environment=ps2ps4us&service-id=s:saegd
-      WORLDS: 1000
-      PAIR: ps4us
-      ROLE: backup
-    links:
-      - redis
-
-
-  ws_ps4eu:
-    image: ghcr.io/genudine/saerro/websocket:latest
-    pull_policy: always
-    restart: always
-    environment:
-      REDIS_ADDR: redis://redis:6379
-      WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2ps4eu&service-id=s:saegd
-      WORLDS: 2000
-      PAIR: ps4eu
-      ROLE: primary
-    links:
-      - redis
-  
-  ws_ps4eu_backup:
-    image: ghcr.io/genudine/saerro/websocket:latest
-    pull_policy: always
-    restart: always
-    environment:
-      REDIS_ADDR: redis://redis:6379
-      WS_ADDR: wss://push.planetside2.com/streaming?environment=ps2ps4eu&service-id=s:saegd
-      WORLDS: 2000
-      PAIR: ps4eu
-      ROLE: backup
-    links:
-      - redis
-  
-  task_prune:
-    image: ghcr.io/genudine/saerro/tasks:latest
-    command: /app prune
-    pull_policy: always
-    restart: "no"
-    environment:
-      REDIS_ADDR: redis://redis:6379
-    links:
-      - redis
+      - tsdb

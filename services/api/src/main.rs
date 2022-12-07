@@ -6,8 +6,7 @@ mod vehicles;
 mod world;
 
 use async_graphql::{
-    http::{playground_source, GraphQLPlaygroundConfig},
-    EmptyMutation, EmptySubscription, Request, Response, Schema,
+    http::GraphiQLSource, EmptyMutation, EmptySubscription, Request, Response, Schema,
 };
 use axum::{
     extract::Query,
@@ -42,13 +41,19 @@ async fn graphql_handler_get(
     query: Query<Request>,
 ) -> axum::response::Response {
     if query.query == "" {
-        return Redirect::to("/graphql/playground").into_response();
+        return Redirect::to("/graphiql").into_response();
     }
 
     Json(schema.execute(query.0).await).into_response()
 }
-async fn graphql_playground() -> impl IntoResponse {
-    Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
+
+async fn graphiql() -> impl IntoResponse {
+    Html(
+        GraphiQLSource::build()
+            .endpoint("/graphql")
+            .title("Saerro Listening Post")
+            .finish(),
+    )
 }
 
 #[tokio::main]
@@ -76,7 +81,7 @@ async fn main() {
             "/graphql",
             post(graphql_handler_post).get(graphql_handler_get),
         )
-        .route("/graphql/playground", get(graphql_playground))
+        .route("/graphql/playground", get(graphiql))
         .fallback(handle_404)
         .layer(Extension(redis))
         .layer(Extension(schema))

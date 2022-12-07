@@ -5,6 +5,14 @@ services:
     image: redis
     command: redis-server --save "" --appendonly no
     container_name: redis
-    restart: always
     ports:
       - "6379:6379"
+
+  tsdb:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_PASSWORD: saerro321
+      POSTGRES_USER: saerrouser
+      POSTGRES_DB: data
+    ports:
+      - 5432:5432

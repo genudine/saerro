@@ -1,13 +1,28 @@
+use async_once::AsyncOnce;
+use dotenvy::dotenv;
+use lazy_static::lazy_static;
+use migrations::cmd_migrate;
 use once_cell::sync::Lazy;
 use redis::Commands;
+use sqlx::query;
 use std::env::args;
 use std::ops::Sub;
 use std::time::{Duration, SystemTime};
+
+mod migrations;
 
 pub static REDIS_CLIENT: Lazy<redis::Client> = Lazy::new(|| {
     redis::Client::open(std::env::var("REDIS_ADDR").unwrap_or("redis://localhost:6379".to_string()))
         .unwrap()
 });
+
+lazy_static! {
+    pub static ref PG: AsyncOnce<sqlx::PgPool> = AsyncOnce::new(async {
+        let db_url = std::env::var("DATABASE_URL")
+            .unwrap_or("postgres://saerrouser:saerro321@localhost:5432/data".to_string());
+        sqlx::PgPool::connect(&db_url).await.unwrap()
+    });
+}
 
 fn cmd_prune() {
     println!("Pruning old data...");
@@ -46,14 +61,19 @@ fn cmd_help() {
     println!("Commands:");
     println!("  help - Show this help message");
     println!("  prune - Remove stale data from Redis");
+    println!("  migrate - Reset and create database tables");
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    dotenv().ok();
+
     let command = args().nth(1).unwrap_or("help".to_string());
 
     match command.as_str() {
         "help" => cmd_help(),
         "prune" => cmd_prune(),
+        "migrate" => cmd_migrate().await,
         _ => {
             println!("Unknown command: {}", command);
             cmd_help();
