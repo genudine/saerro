@@ -1,7 +1,6 @@
-use crate::{classes::Classes, util::zcount, vehicles::Vehicles};
+use crate::{classes::Classes, vehicles::Vehicles};
 use async_graphql::{Context, Object};
 use lazy_static::lazy_static;
-use redis::aio::MultiplexedConnection;
 use std::collections::HashMap;
 
 lazy_static! {
@@ -67,8 +66,7 @@ impl World {
     }
 
     async fn population<'ctx>(&self, ctx: &Context<'ctx>) -> u32 {
-        let con = ctx.data::<MultiplexedConnection>().unwrap().to_owned();
-        zcount(con, format!("wp:{}", self.id)).await
+        0
     }
 
     async fn faction_population(&self) -> FactionPopulation {
@@ -92,8 +90,7 @@ struct FactionPopulation {
 
 impl FactionPopulation {
     async fn by_faction<'ctx>(&self, ctx: &Context<'ctx>, faction: u8) -> u32 {
-        let con = ctx.data::<MultiplexedConnection>().unwrap().to_owned();
-        zcount(con, format!("wp:{}/{}", self.world_id, faction)).await
+        0
     }
 }
 

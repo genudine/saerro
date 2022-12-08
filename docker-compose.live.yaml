@@ -3,14 +3,6 @@
 version: '3.7'
 
 services:
-  redis:
-    image: redis:alpine
-    command: redis-server --save "" --appendonly no
-    container_name: redis
-    restart: always
-    ports:
-      - 6379:6379
-
   tsdb:
     image: timescale/timescaledb:latest-pg14
     environment:
@@ -29,15 +21,27 @@ services:
       - tsdb
     restart: always
     environment:
-      DATABASE_ADDR: postgres://saerrouser:saerro321@tsdb:$TSDB_PORT/data
+      DATABASE_ADDR: postgres://saerrouser:saerro321@tsdb:5432/data
 
   ws:
     image: ghcr.io/genudine/saerro/websocket:latest
     pull_policy: always
     restart: always
+    ports:
+      - 8999:8999
     environment:
-      DATABASE_ADDR: postgres://saerrouser:saerro321@tsdb:$TSDB_PORT/data
-      WS_ADDR: wss://push.nanite-systems.net/streaming?environment=ps2&service-id=s:saegd
+      DATABASE_ADDR: postgres://saerrouser:saerro321@tsdb:5432/data
+      WS_ADDR: wss://push.nanite-systems.net/streaming?environment=all&service-id=s:saegd
       WORLDS: all
+    links:
+      - tsdb
+
+  prune:
+    image: ghcr.io/genudine/saerro/tasks:latest
+    command: prune
+    pull_policy: always
+    restart: "no"
+    environment:
+      DATABASE_ADDR: postgres://saerrouser:saerro321@tsdb:5432/data
     links:
       - tsdb

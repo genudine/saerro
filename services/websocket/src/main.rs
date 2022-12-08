@@ -7,15 +7,15 @@ use serde::Deserialize;
 use serde_aux::prelude::*;
 use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, query};
-use std::{env, net::SocketAddr, time::Duration};
+use std::{env, net::SocketAddr};
 use tokio::task::JoinSet;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 mod translators;
 
 lazy_static! {
-    static ref PAIR: String = env::var("PAIR").unwrap_or_default();
-    static ref ROLE: String = env::var("ROLE").unwrap_or("primary".to_string());
+    // static ref PAIR: String = env::var("PAIR").unwrap_or_default();
+    // static ref ROLE: String = env::var("ROLE").unwrap_or("primary".to_string());
     static ref WS_ADDR: String = env::var("WS_ADDR").unwrap_or_default();
     static ref PG: AsyncOnce<sqlx::PgPool> = AsyncOnce::new(async {
         let db_url = std::env::var("DATABASE_URL")
@@ -70,6 +70,11 @@ struct ClassEvent {
     loadout_id: String,
     zone_id: i32,
     team_id: i32,
+}
+
+struct AnalyticsEvent {
+    world_id: i32,
+    event_name: String,
 }
 
 // async fn track_pop(pop_event: PopEvent) {
@@ -165,9 +170,32 @@ async fn track_class(class_event: ClassEvent) {
     .unwrap();
 }
 
+async fn track_analytics(analytics_event: AnalyticsEvent) {
+    // println!("[ws/track_analytics]");
+    let pool = PG.get().await;
+
+    let AnalyticsEvent {
+        world_id,
+        event_name,
+    } = analytics_event;
+
+    query("INSERT INTO analytics (time, world_id, event_name) VALUES (now(), $1, $2);")
+        .bind(world_id)
+        .bind(event_name)
+        .execute(pool)
+        .await
+        .unwrap();
+}
+
 async fn process_event(event: &Event) {
     let mut set = JoinSet::new();
     // println!("[ws/process_event] EVENT: {:?}", event);
+
+    set.spawn(track_analytics(AnalyticsEvent {
+        world_id: event.world_id.clone(),
+        event_name: event.event_name.clone(),
+    }));
+
     if event.character_id != "0" {
         // General population tracking
         set.spawn(track_pop(PopEvent {

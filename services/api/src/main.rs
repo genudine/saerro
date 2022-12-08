@@ -1,7 +1,6 @@
 mod classes;
 mod health;
 mod query;
-mod util;
 mod vehicles;
 mod world;
 
@@ -58,20 +57,12 @@ async fn graphiql() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() {
-    let redis_url = format!(
-        "redis://{}:{}",
-        std::env::var("REDIS_HOST").unwrap_or("localhost".to_string()),
-        std::env::var("REDIS_PORT").unwrap_or("6379".to_string()),
-    );
-
-    let redis = redis::Client::open(redis_url)
-        .unwrap()
-        .get_multiplexed_tokio_connection()
-        .await
-        .unwrap();
+    let db_url = std::env::var("DATABASE_URL")
+        .unwrap_or("postgres://saerrouser:saerro321@localhost:5432/data".to_string());
+    let db = sqlx::PgPool::connect(&db_url).await.unwrap();
 
     let schema = Schema::build(query::Query, EmptyMutation, EmptySubscription)
-        .data(redis.clone())
+        .data(db.clone())
         .finish();
 
     let app = Router::new()
@@ -83,7 +74,7 @@ async fn main() {
         )
         .route("/graphql/playground", get(graphiql))
         .fallback(handle_404)
-        .layer(Extension(redis))
+        .layer(Extension(db))
         .layer(Extension(schema))
         .layer(
             CorsLayer::new()

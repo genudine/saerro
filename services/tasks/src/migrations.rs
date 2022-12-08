@@ -4,7 +4,12 @@ use sqlx::query;
 pub async fn cmd_migrate() {
     println!("Migrating database...");
 
-    tokio::join!(migrate_players(), migrate_classes(), migrate_vehicles(),);
+    tokio::join!(
+        migrate_players(),
+        migrate_classes(),
+        migrate_vehicles(),
+        migrate_analytics()
+    );
 }
 
 async fn migrate_players() {
@@ -21,8 +26,8 @@ async fn migrate_players() {
     println!("PLAYERS => CREATE TABLE players");
     query(
         "CREATE TABLE players (
-        time TIMESTAMPTZ NOT NULL,
         character_id TEXT NOT NULL,
+        time TIMESTAMPTZ NOT NULL,
         world_id INT NOT NULL,
         faction_id INT NOT NULL,
         zone_id INT NOT NULL);",
@@ -63,8 +68,8 @@ async fn migrate_classes() {
     println!("CLASSES => CREATE TABLE classes");
     query(
         "CREATE TABLE classes (
-        time TIMESTAMPTZ NOT NULL,
         character_id TEXT NOT NULL,
+        time TIMESTAMPTZ NOT NULL,
         world_id INT NOT NULL,
         faction_id INT NOT NULL,
         zone_id INT NOT NULL, 
@@ -106,8 +111,8 @@ async fn migrate_vehicles() {
     println!("VEHICLES => CREATE TABLE vehicles");
     query(
         "CREATE TABLE vehicles (
-        time TIMESTAMPTZ NOT NULL,
         character_id TEXT NOT NULL,
+        time TIMESTAMPTZ NOT NULL,
         world_id INT NOT NULL,
         faction_id INT NOT NULL,
         zone_id INT NOT NULL, 
@@ -134,4 +139,37 @@ async fn migrate_vehicles() {
         .unwrap();
 
     println!("VEHICLES => done!");
+}
+
+async fn migrate_analytics() {
+    let pool = PG.get().await;
+
+    println!("-> Migrating analytics");
+    println!("ANALYTICS => CREATE TABLE IF NOT EXISTS analytics");
+    query(
+        "CREATE TABLE IF NOT EXISTS analytics (
+        time TIMESTAMPTZ NOT NULL,
+        event_name TEXT NOT NULL,
+        world_id INT NOT NULL);",
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+
+    println!("ANALYTICS => create_hypertable");
+    query(
+        "SELECT create_hypertable('analytics', 'time', 
+            chunk_time_interval => INTERVAL '1 hour', if_not_exists => TRUE);",
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+
+    println!("ANALYTICS => add_retention_policy");
+    query("SELECT add_retention_policy('analytics', INTERVAL '1 day', if_not_exists => TRUE);")
+        .execute(pool)
+        .await
+        .unwrap();
+
+    println!("ANALYTICS => done!");
 }

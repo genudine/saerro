@@ -1,15 +1,8 @@
 version: "3"
 
 services:
-  redis:
-    image: redis
-    command: redis-server --save "" --appendonly no
-    container_name: redis
-    ports:
-      - "6379:6379"
-
   tsdb:
-    image: timescale/timescaledb:latest-pg14
+    image: timescale/timescaledb-ha:pg14-latest
     environment:
       POSTGRES_PASSWORD: saerro321
       POSTGRES_USER: saerrouser

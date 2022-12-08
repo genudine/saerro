@@ -1,6 +1,4 @@
-use crate::util::zcount;
 use async_graphql::{Context, Object};
-use redis::aio::MultiplexedConnection;
 
 pub struct Vehicles {
     world_id: String,
@@ -11,8 +9,7 @@ impl Vehicles {
         Self { world_id }
     }
     async fn by_vehicle<'ctx>(&self, ctx: &Context<'ctx>, vehicle_name: &str) -> u32 {
-        let con = ctx.data::<MultiplexedConnection>().unwrap().to_owned();
-        zcount(con, format!("v:{}/{}", self.world_id, vehicle_name)).await
+        0
     }
 }
 

@@ -49,7 +49,6 @@ dependencies = [
  "async-graphql-axum",
  "axum",
  "lazy_static",
- "redis",
  "serde",
  "serde_json",
  "sqlx",
