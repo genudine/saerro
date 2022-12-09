@@ -14,39 +14,185 @@
     color: #cead42;
     text-decoration: none;
   }
+
+  .hidden {
+    display: none;
+  }
 </style>
 
 <h1>Saerro Listening Post</h1>
 <h2>Live Population Stats API for PlanetSide 2</h2>
+<p>
+  This is a GraphQL API, which means you can query for exactly the data you
+  need. You can also use the GraphiQL interface to explore the data and build
+  your queries.
+</p>
 <ul>
-  <li><a href="/graphql/playground">Check out the GraphQL Playground</a></li>
+  <li><a href="/graphiql">Check out GraphiQL</a></li>
   <li>
-    <a
-      href="/graphql?query=%7B%20health%20%7B%20pc%20redis%20ps4us%20ps4eu%20%7D%7D"
+    <a href="/graphql?query={ health { database ingest ingestReachable } }"
       >Current system status</a
     >
     (<a
-      href="/graphql/playground?query=%7B%20health%20%7B%20pc%20redis%20ps4us%20ps4eu%20%7D%7D"
-      >or in playground</a
+      href="#"
+      onclick="javascript:document.querySelector('#status_query').classList.toggle('hidden')"
+      >show GraphQL</a
     >)
+    <ul id="status_query" class="hidden query">
+      <li>
+        <pre><code>{ 
+  health { 
+    database
+    ingest
+    ingestReachable 
+  } 
+}</code></pre>
+      </li>
+    </ul>
   </li>
   <li>
     <a
-      href="/graphql?query=%7B%0A%20%20allWorlds%20%7B%0A%20%20%20%20name%0A%20%20%20%20population%0A%20%20%7D%0A%7D%0A"
+      href="/graphql?query={ allWorlds { name population { total nc tr vs } } }"
     >
       Current population of all worlds
     </a>
     (<a
-      href="/graphql/playground?query=%7B%0A%20%20allWorlds%20%7B%0A%20%20%20%20name%0A%20%20%20%20population%0A%20%20%7D%0A%7D%0A"
-      >or in playground</a
+      href="#"
+      onclick="javascript:document.querySelector('#current_pop_query').classList.toggle('hidden')"
+      >show GraphQL</a
     >)
+    <ul id="current_pop_query" class="hidden query">
+      <li>
+        <pre><code>{
+  allWorlds {
+    name
+    population {
+      total
+      nc
+      tr
+      vs
+    }
+  }
+}</code></pre>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a
+      href="/graphql?query={ allWorlds { name classes { combatMedic { total nc tr vs } } vehicles { total sunderer { total nc tr vs } } } }"
+    >
+      Show every Sunderer and Combat Medic for every server by faction
+    </a>
+    (<a
+      href="#"
+      onclick="javascript:document.querySelector('#complex_query').classList.toggle('hidden')"
+      >show GraphQL</a
+    >)
+    <ul id="complex_query" class="hidden query">
+      <li>
+        <pre><code>{
+  allWorlds {
+    name
+    classes {
+      combatMedic {
+        total
+        nc
+        tr
+        vs
+      }
+    }
+    vehicles {
+      total
+      sunderer {
+        total
+        nc
+        tr
+        vs
+      }
+    }
+  }
+}</code></pre>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a
+      href="/graphql?query={ zones { all { name classes { heavyAssault { nc tr vs } lightAssault { nc tr vs } } vehicles { vanguard { total } prowler { total } magrider { total } lightning { nc vs tr } chimera { nc vs tr } } } } }"
+    >
+      Show the current counts of heavy assaults, light assaults, and tanks per
+      continent globally
+    </a>
+    (<a
+      href="#"
+      onclick="javascript:document.querySelector('#very_complex_query').classList.toggle('hidden')"
+      >show GraphQL</a
+    >)
+    <ul id="very_complex_query" class="hidden query">
+      <li>
+        <pre><code>{
+  zones {
+    all {
+      name
+      classes {
+        heavyAssault {
+          nc
+          tr
+          vs
+        }
+        lightAssault {
+          nc
+          tr
+          vs
+        }
+      }
+      vehicles {
+        vanguard {
+          total
+        }
+        prowler {
+          total
+        }
+        magrider {
+          total
+        }
+        lightning {
+          nc
+          vs
+          tr
+        }
+        chimera {
+          nc
+          vs
+          tr
+        }
+      }
+    }
+  }
+}</code></pre>
+      </li>
+    </ul>
   </li>
 </ul>
+<p>
+  This API supports two query methods,
+  <a href="https://graphql.org/learn/serving-over-http/#get-request">GET</a>
+  and
+  <a href="https://graphql.org/learn/serving-over-http/#post-request">POST</a>.
+  To view the JSON outputs, you can use a tool like
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/jsonview/"
+    >JSONView for Firefox</a
+  >
+  or
+  <a
+    href="https://chrome.google.com/webstore/detail/jsonvue/chklaanhfefbnpoihckbnefhakgolnmc"
+    >JSONVue for Chrome</a
+  >.
+</p>
 <p>
   All data is an aggregate of the last 15 minutes of Death and VehicleDestroy
   events, including both attacker and victim.
 </p>
-
+<hr />
 <p>
   This API is provided by Genudine Dynamics.<br />As always, we take no
   responsibility for your use of this data... or our weapons. :)
