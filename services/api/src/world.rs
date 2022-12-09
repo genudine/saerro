@@ -1,48 +1,25 @@
-use crate::{classes::Classes, vehicles::Vehicles};
-use async_graphql::{Context, Object};
-use lazy_static::lazy_static;
-use std::collections::HashMap;
+use crate::{
+    classes::Classes,
+    population::Population,
+    utils::{id_or_name_to_id, id_or_name_to_name, Filters, IdOrNameBy, ID_TO_WORLD, WORLD_IDS},
+    vehicles::Vehicles,
+    zone::Zones,
+};
+use async_graphql::Object;
 
-lazy_static! {
-    static ref WORLD_NAME_TO_ID: HashMap<&'static str, &'static str> = HashMap::from([
-        ("connery", "1"),
-        ("miller", "10"),
-        ("cobalt", "13"),
-        ("emerald", "17"),
-        ("jaeger", "19"),
-        ("soltech", "40"),
-        ("genudine", "1000"),
-        ("ceres", "2000"),
-    ]);
-    static ref WORLD_ID_TO_NAME: HashMap<&'static str, &'static str> = HashMap::from([
-        ("1", "Connery"),
-        ("10", "Miller"),
-        ("13", "Cobalt"),
-        ("17", "Emerald"),
-        ("19", "Jaeger"),
-        ("40", "SolTech"),
-        ("1000", "Genudine"),
-        ("2000", "Ceres"),
-    ]);
-}
 pub struct World {
-    pub id: String,
+    filter: Filters,
 }
 
 impl World {
-    pub fn from_name(name: String) -> World {
-        let id = WORLD_NAME_TO_ID
-            .get(name.to_lowercase().as_str())
-            .unwrap_or(&"-1");
-
-        World { id: id.to_string() }
-    }
-
-    pub fn all_worlds() -> Vec<World> {
-        WORLD_ID_TO_NAME
-            .keys()
-            .map(|id| World { id: id.to_string() })
-            .collect()
+    pub fn new(filter: IdOrNameBy) -> Self {
+        Self {
+            filter: Filters {
+                world: Some(filter),
+                faction: None,
+                zone: None,
+            },
+        }
     }
 }
 
@@ -54,61 +31,121 @@ impl World {
 /// If World.id is not valid or known to the API, World.name will return "Unknown".
 #[Object]
 impl World {
-    async fn id(&self) -> &str {
-        &self.id
+    /// The ID of the world.
+    async fn id(&self) -> i32 {
+        id_or_name_to_id(&WORLD_IDS, self.filter.world.as_ref().unwrap()).unwrap()
     }
 
+    /// The name of the world, in official game capitalization.
     async fn name(&self) -> String {
-        WORLD_ID_TO_NAME
-            .get(self.id.as_str())
-            .unwrap_or(&"Unknown")
-            .to_string()
-    }
+        let name = id_or_name_to_name(&ID_TO_WORLD, self.filter.world.as_ref().unwrap()).unwrap();
 
-    async fn population<'ctx>(&self, ctx: &Context<'ctx>) -> u32 {
-        0
-    }
-
-    async fn faction_population(&self) -> FactionPopulation {
-        FactionPopulation {
-            world_id: self.id.clone(),
+        // Special case for SolTech, lol.
+        if name == "soltech" {
+            return "SolTech".to_string();
         }
+
+        // Capitalize the first letter
+        name[0..1].to_uppercase() + &name[1..]
     }
 
+    /// Population filtered to this world.
+    async fn population(&self) -> Population {
+        Population::new(Some(Filters {
+            world: self.filter.world.clone(),
+            faction: None,
+            zone: None,
+        }))
+    }
+
+    /// Vehicles filtered to this world.
     async fn vehicles(&self) -> Vehicles {
-        Vehicles::new(self.id.clone())
+        Vehicles::new(Some(Filters {
+            world: self.filter.world.clone(),
+            faction: None,
+            zone: None,
+        }))
     }
 
+    /// Classes filtered to this world.
     async fn classes(&self) -> Classes {
-        Classes::new(self.id.clone())
+        Classes::new(Some(Filters {
+            world: self.filter.world.clone(),
+            faction: None,
+            zone: None,
+        }))
+    }
+
+    /// Get a specific zone/continent on this world.
+    async fn zones(&self) -> Zones {
+        Zones::new(Some(self.filter.clone()))
     }
 }
 
-struct FactionPopulation {
-    world_id: String,
-}
-
-impl FactionPopulation {
-    async fn by_faction<'ctx>(&self, ctx: &Context<'ctx>, faction: u8) -> u32 {
-        0
-    }
-}
+#[derive(Default)]
+pub struct WorldQuery;
 
 #[Object]
-impl FactionPopulation {
-    async fn vs<'ctx>(&self, ctx: &Context<'ctx>) -> u32 {
-        self.by_faction(ctx, 1).await
+impl WorldQuery {
+    /// A world by ID or name.
+    pub async fn world(&self, by: IdOrNameBy) -> World {
+        World::new(by)
     }
 
-    async fn nc<'ctx>(&self, ctx: &Context<'ctx>) -> u32 {
-        self.by_faction(ctx, 2).await
+    /// All worlds. This is a convenience method for getting all worlds in one query.
+    /// If you want all of them as aggregate instead of as individual units, use `population`, `vehicles`, `classes` directly instead.
+    pub async fn all_worlds(&self) -> Vec<World> {
+        ID_TO_WORLD
+            .iter()
+            .map(|(id, _)| World::new(IdOrNameBy::Id(*id)))
+            .collect()
     }
 
-    async fn tr<'ctx>(&self, ctx: &Context<'ctx>) -> u32 {
-        self.by_faction(ctx, 3).await
+    /// The Connery world in US West on PC
+    /// Shorthand for `world(by: { id: 1 }})`
+    pub async fn connery(&self) -> World {
+        World::new(IdOrNameBy::Id(1))
     }
 
-    async fn ns<'ctx>(&self, ctx: &Context<'ctx>) -> u32 {
-        self.by_faction(ctx, 4).await
+    /// The Miller world in EU on PC
+    /// Shorthand for `world(by: { id: 10 }})`
+    pub async fn miller(&self) -> World {
+        World::new(IdOrNameBy::Id(10))
+    }
+
+    /// The Cobalt world in EU on PC
+    /// Shorthand for `world(by: { id: 13 }})`
+    pub async fn cobalt(&self) -> World {
+        World::new(IdOrNameBy::Id(13))
+    }
+
+    /// The Emerald world in US East on PC
+    /// Shorthand for `world(by: { id: 17 }})`
+    pub async fn emerald(&self) -> World {
+        World::new(IdOrNameBy::Id(17))
+    }
+
+    /// The Jaeger world in US East on PC
+    /// Shorthand for `world(by: { id: 19 }})`
+    pub async fn jaeger(&self) -> World {
+        World::new(IdOrNameBy::Id(19))
+    }
+
+    /// The SolTech world in Japan on PC
+    /// Shorthand for `world(by: { id: 40 }})`
+    pub async fn soltech(&self) -> World {
+        World::new(IdOrNameBy::Id(40))
+    }
+
+    /// The Genudine world in US East on PS4
+    /// Shorthand for `world(by: { id: 1000 }})`
+    pub async fn genudine(&self) -> World {
+        World::new(IdOrNameBy::Id(1000))
+    }
+
+    /// The Ceres world in EU on PS4
+    /// Shorthand for `world(by: { id: 2000 }})`
+    pub async fn ceres(&self) -> World {
+        World::new(IdOrNameBy::Id(2000))
     }
 }

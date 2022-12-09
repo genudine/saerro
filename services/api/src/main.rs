@@ -1,8 +1,11 @@
 mod classes;
 mod health;
+mod population;
 mod query;
+mod utils;
 mod vehicles;
 mod world;
+mod zone;
 
 use async_graphql::{
     http::GraphiQLSource, EmptyMutation, EmptySubscription, Request, Response, Schema,
@@ -61,7 +64,7 @@ async fn main() {
         .unwrap_or("postgres://saerrouser:saerro321@localhost:5432/data".to_string());
     let db = sqlx::PgPool::connect(&db_url).await.unwrap();
 
-    let schema = Schema::build(query::Query, EmptyMutation, EmptySubscription)
+    let schema = Schema::build(query::Query::default(), EmptyMutation, EmptySubscription)
         .data(db.clone())
         .finish();
 

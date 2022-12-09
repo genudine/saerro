@@ -91,3 +91,14 @@ impl Health {
         }
     }
 }
+
+#[derive(Default)]
+pub struct HealthQuery;
+
+#[Object]
+impl HealthQuery {
+    /// Reports on the health of Saerro Listening Post
+    pub async fn health(&self) -> Health {
+        Health {}
+    }
+}
