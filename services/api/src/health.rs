@@ -71,24 +71,38 @@ impl Health {
         }
     }
 
-    /// Is the websocket connection to the Nanite Systems manifold up?
-    async fn websocket<'ctx>(&self, ctx: &Context<'ctx>) -> UpDown {
+    /// Is the websocket processing jobs?
+    async fn ingest<'ctx>(&self, ctx: &Context<'ctx>) -> UpDown {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
-        match query("SELECT count(*) FROM analytics WHERE time > now() - interval '5 minutes'")
-            .fetch_one(pool)
-            .await
-        {
-            Ok(i) => {
-                let num: i64 = i.get(0);
-                if num == 0 {
-                    UpDown::Down
+        let events_resp =
+            query("SELECT count(*) FROM analytics WHERE time > now() - interval '5 minutes'")
+                .fetch_one(pool)
+                .await;
+
+        match events_resp {
+            Ok(row) => {
+                let events_row: i64 = row.get(0);
+
+                if events_row == 0 {
+                    return UpDown::Down;
                 } else {
-                    UpDown::Up
+                    return UpDown::Up;
                 }
             }
             Err(_) => UpDown::Down,
         }
+    }
+
+    /// Is the websocket actually turned on?
+    async fn ingest_reachable(&self) -> UpDown {
+        reqwest::get(
+            std::env::var("WEBSOCKET_HEALTHCHECK")
+                .unwrap_or("http://localhost:8999/health".to_string()),
+        )
+        .await
+        .map(|_| UpDown::Up)
+        .unwrap_or(UpDown::Down)
     }
 }
 

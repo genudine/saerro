@@ -36,9 +36,9 @@ services:
     links:
       - tsdb
 
-  prune:
+  task_prune:
     image: ghcr.io/genudine/saerro/tasks:latest
-    command: prune
+    command: /app prune
     pull_policy: always
     restart: "no"
     environment:
