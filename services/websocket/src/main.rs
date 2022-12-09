@@ -14,8 +14,6 @@ use tokio_tungstenite::{connect_async, tungstenite::Message};
 mod translators;
 
 lazy_static! {
-    // static ref PAIR: String = env::var("PAIR").unwrap_or_default();
-    // static ref ROLE: String = env::var("ROLE").unwrap_or("primary".to_string());
     static ref WS_ADDR: String = env::var("WS_ADDR").unwrap_or_default();
     static ref PG: AsyncOnce<sqlx::PgPool> = AsyncOnce::new(async {
         let db_url = std::env::var("DATABASE_URL")
@@ -76,11 +74,6 @@ struct AnalyticsEvent {
     world_id: i32,
     event_name: String,
 }
-
-// async fn track_pop(pop_event: PopEvent) {
-//     track_pop_db(pop_event.clone()).await;
-//     track_pop_redis(pop_event).await;
-// }
 
 async fn track_pop(pop_event: PopEvent) {
     // println!("[ws/track_pop]");

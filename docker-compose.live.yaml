@@ -16,7 +16,7 @@ services:
     image: ghcr.io/genudine/saerro/api:latest
     pull_policy: always
     ports:
-      - 8000:80
+      - 80:8000
     links:
       - tsdb
     restart: always

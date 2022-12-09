@@ -2510,7 +2510,6 @@ dependencies = [
  "futures",
  "futures-util",
  "lazy_static",
- "redis",
  "serde",
  "serde-aux",
  "serde_json",

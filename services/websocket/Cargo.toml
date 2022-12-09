@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-redis = { version = "0.22.1", default_features = false, features = ["r2d2"] }
 lazy_static = "1.4.0"
 tokio-tungstenite = { version = "0.18.0", features=["native-tls"] }
 serde = { version = "1.0.149", features = ["derive"] }
