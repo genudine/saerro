@@ -75,7 +75,7 @@ async fn main() {
             "/graphql",
             post(graphql_handler_post).get(graphql_handler_get),
         )
-        .route("/graphql/playground", get(graphiql))
+        .route("/graphiql", get(graphiql))
         .fallback(handle_404)
         .layer(Extension(db))
         .layer(Extension(schema))
