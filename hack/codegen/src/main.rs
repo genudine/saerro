@@ -46,6 +46,9 @@ async fn translators_rs() {
             "mosquito",
             "galaxy",
             "valkyrie",
+            "wasp",
+            "deliverer",
+            "lodestar",
             "liberator",
             "ant",
             "harasser",
@@ -107,11 +110,16 @@ async fn translators_rs() {
                 .find(&item.name.as_ref().unwrap().en.as_ref().unwrap())
                 .unwrap();
 
+            let name = matched
+                .as_str()
+                .to_lowercase()
+                .replace("wasp", "valkyrie")
+                .replace("deliverer", "ant")
+                .replace("lodestar", "galaxy");
+
             Vehicle {
                 vehicle_id: item.vehicle_id,
-                name: Some(LangEn {
-                    en: Some(matched.as_str().to_string().to_lowercase()),
-                }),
+                name: Some(LangEn { en: Some(name) }),
                 propulsion_type: item.propulsion_type,
             }
         })

@@ -34,6 +34,8 @@ lazy_static! {
         ("1105", "vanguard"),
         ("2010", "flash"),
         ("2033", "javelin"),
+        ("2039", "ant"),
+        ("2040", "valkyrie"),
         ("2122", "mosquito"),
         ("2123", "reaver"),
         ("2124", "scythe"),
@@ -47,6 +49,9 @@ lazy_static! {
         ("2135", "prowler"),
         ("2136", "dervish"),
         ("2137", "chimera"),
+        ("2139", "ant"),
+        ("2140", "galaxy"),
+        ("2141", "valkyrie"),
         ("2142", "corsair"),
     ]);
     static ref LOADOUT_TO_CLASS: HashMap<&'static str, &'static str> = HashMap::from([
