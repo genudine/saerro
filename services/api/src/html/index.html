@@ -18,6 +18,22 @@
   .hidden {
     display: none;
   }
+
+  .query {
+    list-style-type: none;
+    padding-left: 0;
+    background-color: #131313;
+    width: fit-content;
+    padding: 2rem;
+    margin: 2rem;
+    border-radius: 10px;
+    border-left: #918b79 3px solid;
+    font-size: 1rem;
+  }
+
+  .query pre {
+    margin: 0;
+  }
 </style>
 
 <h1>Saerro Listening Post</h1>
@@ -30,12 +46,13 @@
 <ul>
   <li><a href="/graphiql">Check out GraphiQL</a></li>
   <li>
-    <a href="/graphql?query={ health { database ingest ingestReachable } }"
+    <a
+      id="status_query_link"
+      href="/graphql?query={ health { database ingest ingestReachable } }"
       >Current system status</a
     >
     (<a
-      href="#"
-      onclick="javascript:document.querySelector('#status_query').classList.toggle('hidden')"
+      href="javascript:document.querySelector('#status_query').classList.toggle('hidden')"
       >show GraphQL</a
     >)
     <ul id="status_query" class="hidden query">
@@ -47,18 +64,23 @@
     ingestReachable 
   } 
 }</code></pre>
+        <a
+          href="javascript:runQuery('status_query_link', 'status_query_result')"
+          >Run ⫸</a
+        ><br />
       </li>
+      <li class="hidden" id="status_query_result"></li>
     </ul>
   </li>
   <li>
     <a
+      id="current_pop_query_link"
       href="/graphql?query={ allWorlds { name population { total nc tr vs } } }"
     >
       Current population of all worlds
     </a>
     (<a
-      href="#"
-      onclick="javascript:document.querySelector('#current_pop_query').classList.toggle('hidden')"
+      href="javascript:document.querySelector('#current_pop_query').classList.toggle('hidden')"
       >show GraphQL</a
     >)
     <ul id="current_pop_query" class="hidden query">
@@ -74,18 +96,23 @@
     }
   }
 }</code></pre>
+        <a
+          href="javascript:runQuery('current_pop_query_link', 'current_pop_query_result')"
+          >Run ⫸</a
+        ><br />
       </li>
+      <li class="hidden" id="current_pop_query_result"></li>
     </ul>
   </li>
   <li>
     <a
+      id="complex_query_link"
       href="/graphql?query={ allWorlds { name classes { combatMedic { total nc tr vs } } vehicles { total sunderer { total nc tr vs } } } }"
     >
       Show every Sunderer and Combat Medic for every server by faction
     </a>
     (<a
-      href="#"
-      onclick="javascript:document.querySelector('#complex_query').classList.toggle('hidden')"
+      href="javascript:document.querySelector('#complex_query').classList.toggle('hidden')"
       >show GraphQL</a
     >)
     <ul id="complex_query" class="hidden query">
@@ -112,19 +139,24 @@
     }
   }
 }</code></pre>
+        <a
+          href="javascript:runQuery('complex_query_link', 'complex_query_result')"
+          >Run ⫸</a
+        ><br />
       </li>
+      <li class="hidden" id="complex_query_result"></li>
     </ul>
   </li>
   <li>
     <a
+      id="very_complex_query_link"
       href="/graphql?query={ zones { all { name classes { heavyAssault { nc tr vs } lightAssault { nc tr vs } } vehicles { vanguard { total } prowler { total } magrider { total } lightning { nc vs tr } chimera { nc vs tr } } } } }"
     >
       Show the current counts of heavy assaults, light assaults, and tanks per
       continent globally
     </a>
     (<a
-      href="#"
-      onclick="javascript:document.querySelector('#very_complex_query').classList.toggle('hidden')"
+      href="javascript:document.querySelector('#very_complex_query').classList.toggle('hidden')"
       >show GraphQL</a
     >)
     <ul id="very_complex_query" class="hidden query">
@@ -169,7 +201,12 @@
     }
   }
 }</code></pre>
+        <a
+          href="javascript:runQuery('very_complex_query_link', 'very_complex_query_result')"
+          >Run ⫸</a
+        ><br />
       </li>
+      <li class="hidden" id="very_complex_query_result"></li>
     </ul>
   </li>
 </ul>
@@ -178,7 +215,7 @@
   <a href="https://graphql.org/learn/serving-over-http/#get-request">GET</a>
   and
   <a href="https://graphql.org/learn/serving-over-http/#post-request">POST</a>.
-  To view the JSON outputs, you can use a tool like
+  To view the JSON outputs without fancy UIs, you can use a browser plugin like
   <a href="https://addons.mozilla.org/en-US/firefox/addon/jsonview/"
     >JSONView for Firefox</a
   >
@@ -204,3 +241,23 @@
     >pstop</a
   >]
 </p>
+<script>
+  const runQuery = async (linkId, resultId) => {
+    const link = document.getElementById(linkId);
+    const result = document.getElementById(resultId);
+    result.innerHTML = "Loading...";
+    result.classList.remove("hidden");
+    fetch(link.href)
+      .then((response) => response.json())
+      .then((data) => {
+        result.innerHTML = `<pre><code>${JSON.stringify(
+          data.data,
+          null,
+          2
+        )}</pre></code>`;
+      })
+      .catch((error) => {
+        result.innerHTML = "Failed...";
+      });
+  };
+</script>
