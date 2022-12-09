@@ -23,11 +23,7 @@ lazy_static! {
 }
 
 async fn send_init(tx: futures::channel::mpsc::UnboundedSender<Message>) {
-    let worlds_raw = env::var("WORLDS").unwrap_or_default();
-    if worlds_raw == "" {
-        println!("WORLDS not set");
-        return;
-    }
+    let worlds_raw = env::var("WORLDS").unwrap_or("all".to_string());
     let worlds: Vec<&str> = worlds_raw.split(',').collect();
 
     // Send setup message
@@ -261,7 +257,7 @@ struct Event {
     world_id: i32,
     character_id: String,
     attacker_character_id: String,
-    #[serde(deserialize_with = "deserialize_number_from_string")]
+    #[serde(default, deserialize_with = "deserialize_number_from_string")]
     attacker_team_id: i32,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     team_id: i32,
