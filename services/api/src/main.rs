@@ -1,3 +1,4 @@
+mod analytics;
 mod classes;
 mod health;
 mod population;

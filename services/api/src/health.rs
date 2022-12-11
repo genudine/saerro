@@ -74,7 +74,7 @@ impl Health {
                 let last_event: DateTime<Utc> = row.get(0);
 
                 if last_event < Utc::now() - chrono::Duration::minutes(5) {
-                    return (UpDown::Down, None);
+                    return (UpDown::Down, Some(last_event));
                 } else {
                     return (UpDown::Up, Some(last_event));
                 }
