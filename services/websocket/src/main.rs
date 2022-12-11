@@ -316,9 +316,14 @@ async fn main() {
     let fused_reader = read
         .for_each(|msg| async move {
             let body = &msg.unwrap().to_string();
-            let data: Payload = serde_json::from_str(body).unwrap_or(Payload {
-                payload: Event::default(),
-            });
+
+            let data: Payload = match serde_json::from_str(body) {
+                Ok(data) => data,
+                Err(_) => {
+                    // println!("Error: {}; body: {}", e, body.clone());
+                    return;
+                }
+            };
 
             if data.payload.event_name == "" {
                 return;

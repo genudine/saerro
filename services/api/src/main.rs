@@ -27,6 +27,10 @@ async fn index() -> Html<&'static str> {
     Html(include_str!("html/index.html"))
 }
 
+async fn ingest() -> Html<&'static str> {
+    Html(include_str!("html/ingest.html"))
+}
+
 async fn handle_404() -> Html<&'static str> {
     Html(include_str!("html/404.html"))
 }
@@ -70,6 +74,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(index))
+        .route("/ingest", get(ingest))
         .route("/health", get(health::get_health))
         .route(
             "/graphql",

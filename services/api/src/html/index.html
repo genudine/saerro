@@ -48,7 +48,7 @@
   <li>
     <a
       id="status_query_link"
-      href="/graphql?query={ health { database ingest ingestReachable } }"
+      href="/graphql?query={ health { database ingest ingestReachable worldsDisclaimer worlds { name status lastEvent } } }"
       >Current system status</a
     >
     (<a
@@ -61,7 +61,13 @@
   health { 
     database
     ingest
-    ingestReachable 
+    ingestReachable
+    worldsDisclaimer
+    worlds {
+      name
+      status
+      lastEvent
+    }
   } 
 }</code></pre>
         <a
@@ -236,10 +242,10 @@
 </p>
 <p>For help, please contact us in #api-dev on the PlanetSide 2 Discord.</p>
 <p>
-  [<a href="https://github.com/genudine/saerro">github</a>] [<a
-    href="https://pstop.harasse.rs"
-    >pstop</a
-  >]
+  [<a href="/ingest.html">ingest stats</a>] [<a
+    href="https://github.com/genudine/saerro"
+    >github</a
+  >] [<a href="https://pstop.harasse.rs">pstop</a>]
 </p>
 <script>
   const runQuery = async (linkId, resultId) => {
