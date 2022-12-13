@@ -22,7 +22,7 @@ jobs:
             --build-arg SERVICE=${{ matrix.service }} \
             -t ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
             --cache-to type=gha,scope=$GITHUB_REF_NAME-${{ matrix.service }} \
-            --cache-from type=gha,scope=$GITHUB_REF_NAME-${{ matrix.service }} .
+            --cache-from type=gha,scope=$GITHUB_REF_NAME-${{ matrix.service }}
       - run: |
           docker tag ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
             ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
