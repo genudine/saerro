@@ -1,8 +1,7 @@
 # Step -1: Grab mold
 FROM lukemathwalker/cargo-chef as rust-base
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y --no-install-recommends curl clang
 ARG MOLD_VERSION=1.7.1
-RUN apt-get update && apt-get install -y --no-install-recommends clang
 RUN curl -sSL https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-x86_64-linux.tar.gz | tar xzv && \
     mv mold-${MOLD_VERSION}-x86_64-linux/bin/mold /mold && \
     rm -rf mold-${MOLD_VERSION}-x86_64-linux
@@ -20,7 +19,6 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM rust-base as cacher
 WORKDIR /app
 RUN cargo install cargo-chef
-COPY --from=mold /mold /mold
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
