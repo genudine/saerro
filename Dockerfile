@@ -18,7 +18,6 @@ RUN cargo chef prepare --recipe-path recipe.json --bin services/${SERVICE}
 # Step 2: Cache project dependencies
 FROM rust-base as cacher
 ARG SERVICE
-COPY . .
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json --bin ${SERVICE}
 
