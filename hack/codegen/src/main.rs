@@ -1,5 +1,4 @@
 use std::process;
-
 use lazy_static::lazy_static;
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};

@@ -1,5 +1,7 @@
 [workspace]
 members = [
     "services/*",
-    "hack/*"
+]
+exclude = [
+    "hack/codegen",
 ]
