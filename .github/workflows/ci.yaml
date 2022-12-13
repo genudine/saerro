@@ -19,14 +19,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: docker buildx create --use --driver=docker-container
       - run: |
+          TAG_LATEST_IF_MASTER=$(if [ "$GITHUB_REF_NAME" = "main" ]; then echo "-t ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest"; else echo ""; fi)
           docker buildx build . \
             --build-arg SERVICE=${{ matrix.service }} \
-            -t ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
+            -t ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} $TAG_LATEST_IF_MASTER \
+            --push \
             --cache-to type=gha,scope=$GITHUB_REF_NAME-${{ matrix.service }} \
             --cache-from type=gha,scope=$GITHUB_REF_NAME-${{ matrix.service }}
-      - run: |
-          docker tag ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
-            ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
-        if: github.ref == 'refs/heads/main'
+        # - run: |
+        #     docker tag ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
+        #       ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
+        # if: github.ref == 'refs/heads/main'
       - run: |
           docker push ghcr.io/${{ github.repository }}/${{ matrix.service }}
