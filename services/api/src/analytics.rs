@@ -20,11 +20,21 @@ impl Analytics {
         ctx: &Context<'ctx>,
         #[graphql(default = 60)] bucket_size: u64,
         world_id: Option<i32>,
+        #[graphql(default = false)] hi_precision: bool,
     ) -> Vec<Event> {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
-        let sql = format!("SELECT time_bucket('{} seconds', time) AS bucket, count(*), event_name, world_id FROM analytics WHERE time > now() - interval '1 day' {} GROUP BY bucket, world_id, event_name ORDER BY bucket ASC",
-            bucket_size,
+        let sql = format!("SELECT time_bucket('{} seconds', time) AS bucket, count(*), event_name, world_id FROM analytics WHERE time > now() - interval '{}' {} GROUP BY bucket, world_id, event_name ORDER BY bucket ASC",
+            if hi_precision {
+                5
+            } else {
+                bucket_size
+            },
+            if hi_precision {
+                "1 hour"
+            } else {
+                "1 day"
+            },
             if let Some(world_id) = world_id {
                 format!("AND world_id = {}", world_id)
             } else {
