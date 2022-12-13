@@ -17,6 +17,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker buildx create --use --driver=docker-container
       - run: |
           docker buildx build . \
             --build-arg SERVICE=${{ matrix.service }} \
