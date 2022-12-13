@@ -65,6 +65,10 @@ async fn main() {
     match command.as_str() {
         "help" => cmd_help(),
         "prune" => cmd_prune().await,
+        "auto-prune" => loop {
+            cmd_prune().await;
+            tokio::time::sleep(tokio::time::Duration::from_secs(60 * 5)).await;
+        },
         "migrate" => cmd_migrate().await,
         _ => {
             println!("Unknown command: {}", command);

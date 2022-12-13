@@ -14,6 +14,213 @@
     color: #cead42;
     text-decoration: none;
   }
+
+  .chart-container {
+    height: 50vh;
+    position: relative;
+  }
+
+  .smaller {
+    height: 33vh;
+  }
 </style>
 <h1>Ingest Stats</h1>
-<p>sorry wip</p>
+<div>
+  <h3>All Events by Type</h3>
+  <div class="chart-container">
+    <canvas id="all-events-by-type" />
+  </div>
+</div>
+<div>
+  <h3>Events by World</h3>
+  <div class="chart-container">
+    <canvas id="events-by-world" />
+  </div>
+</div>
+<div>
+  <h3>Connery</h3>
+  <div class="chart-container smaller">
+    <canvas id="connery" />
+  </div>
+</div>
+<div>
+  <h3>Miller</h3>
+  <div class="chart-container smaller">
+    <canvas id="miller" />
+  </div>
+</div>
+<div>
+  <h3>Cobalt</h3>
+  <div class="chart-container smaller">
+    <canvas id="cobalt" />
+  </div>
+</div>
+<div>
+  <h3>Emerald</h3>
+  <div class="chart-container smaller">
+    <canvas id="emerald" />
+  </div>
+</div>
+<div>
+  <h3>Jaeger</h3>
+  <div class="chart-container smaller">
+    <canvas id="jaeger" />
+  </div>
+</div>
+<div>
+  <h3>SolTech</h3>
+  <div class="chart-container smaller">
+    <canvas id="soltech" />
+  </div>
+</div>
+<div>
+  <h3>Genudine</h3>
+  <div class="chart-container smaller">
+    <canvas id="genudine" />
+  </div>
+</div>
+<div>
+  <h3>Ceres</h3>
+  <div class="chart-container smaller">
+    <canvas id="ceres" />
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script>
+  const renderChart = (id, data, config = {}) => {};
+
+  const allEventsByType = (id, events) => {
+    let allEvents = events.reduce(
+      (acc, ev) => {
+        acc[ev.eventName][ev.time] = (acc[ev.time] || 0) + ev.count;
+        return acc;
+      },
+      { Death: {}, VehicleDestroy: {} }
+    );
+
+    new Chart(document.getElementById(id), {
+      type: "line",
+      options: {
+        scales: {
+          y: { beginAtZero: true, suggestedMin: 0 },
+          x: { stacked: true, type: "timeseries" },
+        },
+      },
+      data: {
+        datasets: [
+          {
+            label: "Deaths",
+            data: allEvents.Death,
+            // backgroundColor: "#cead42",
+          },
+          {
+            label: "Vehicle Destroys",
+            data: allEvents.VehicleDestroy,
+            // backgroundColor: "#7842ce",
+          },
+        ],
+      },
+    });
+  };
+
+  const eventsByWorld = (events) => {
+    let allEvents = events.reduce((acc, ev) => {
+      acc[ev.worldId] = acc[ev.worldId] || {};
+      acc[ev.worldId][ev.time] = (acc[ev.time] || 0) + ev.count;
+      return acc;
+    }, {});
+
+    new Chart(document.getElementById("events-by-world"), {
+      type: "line",
+      options: {
+        scales: {
+          y: { beginAtZero: true },
+          x: {
+            type: "timeseries",
+          },
+        },
+      },
+      data: {
+        datasets: [
+          {
+            label: "Connery",
+            data: allEvents["1"],
+          },
+          {
+            label: "Miller",
+            data: allEvents["10"],
+          },
+          {
+            label: "Cobalt",
+            data: allEvents["13"],
+          },
+          {
+            label: "Emerald",
+            data: allEvents["17"],
+          },
+          {
+            label: "Jaeger",
+            data: allEvents["19"],
+          },
+          {
+            label: "SolTech",
+            data: allEvents["40"],
+          },
+          {
+            label: "Genudine",
+            data: allEvents["1000"],
+          },
+          {
+            label: "Ceres",
+            data: allEvents["2000"],
+          },
+        ],
+      },
+    });
+  };
+
+  (async () => {
+    let resp = await fetch("/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `
+       {
+        analytics {
+          events(bucketSize: ${60 * 5}) {
+            eventName
+            count
+            time
+            worldId
+          }
+        }
+      }
+    `,
+      }),
+    });
+
+    let body = await resp.json();
+
+    let events = body.data.analytics.events;
+    window.events = events;
+
+    allEventsByType("all-events-by-type", events);
+    eventsByWorld(events);
+    [
+      ["connery", 1],
+      ["miller", 10],
+      ["cobalt", 13],
+      ["emerald", 17],
+      ["jaeger", 19],
+      ["soltech", 40],
+      ["genudine", 1000],
+      ["ceres", 2000],
+    ].forEach(([world, id]) => {
+      let worldEvents = events.filter((ev) => ev.worldId === id);
+      allEventsByType(world, worldEvents);
+    });
+  })();
+</script>

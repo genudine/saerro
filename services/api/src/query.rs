@@ -1,6 +1,6 @@
 use crate::{
-    classes::ClassesQuery, health::HealthQuery, population::PopulationQuery,
-    vehicles::VehicleQuery, world::WorldQuery, zone::ZoneQuery,
+    analytics::AnalyticsQuery, classes::ClassesQuery, health::HealthQuery,
+    population::PopulationQuery, vehicles::VehicleQuery, world::WorldQuery, zone::ZoneQuery,
 };
 use async_graphql::MergedObject;
 
@@ -12,4 +12,5 @@ pub struct Query(
     WorldQuery,
     ZoneQuery,
     HealthQuery,
+    AnalyticsQuery,
 );

@@ -1,5 +1,5 @@
 use async_once::AsyncOnce;
-use axum::{routing::get, Router};
+use axum::{routing::get, Json, Router};
 use futures::{pin_mut, FutureExt};
 use futures_util::StreamExt;
 use lazy_static::lazy_static;
@@ -283,7 +283,14 @@ struct Payload {
 }
 
 async fn healthz() {
-    let app = Router::new().route("/healthz", get(|| async { "ok" }));
+    let app = Router::new().route(
+        "/healthz",
+        get(|| async {
+            Json(json!({
+                "status": "ok",
+            }))
+        }),
+    );
 
     let port: u16 = std::env::var("PORT")
         .unwrap_or("8999".to_string())
@@ -314,7 +321,7 @@ async fn main() {
 
     let fused_writer = rx.map(Ok).forward(write).fuse();
     let fused_reader = read
-        .for_each(|msg| async move {
+        .for_each(|msg| async {
             let body = &msg.unwrap().to_string();
 
             let data: Payload = match serde_json::from_str(body) {
