@@ -15,82 +15,187 @@
     text-decoration: none;
   }
 
+  h3 {
+    margin: 0;
+  }
+
   .chart-container {
-    height: 50vh;
     position: relative;
   }
 
-  .smaller {
-    height: 33vh;
+  .main {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(300px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .wide {
+    grid-column: span 2;
+  }
+
+  .graph-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sums-15m {
+    color: rgba(165, 165, 165, 1);
+  }
+
+  .sums-1h {
+    color: rgba(165, 165, 165, 0.8);
+  }
+
+  .sums-6h {
+    color: rgba(165, 165, 165, 0.6);
+  }
+
+  .sums-1d {
+    color: rgba(165, 165, 165, 0.4);
   }
 </style>
-<h1>Ingest Stats</h1>
-<div>
-  <h3>All Events by Type</h3>
-  <div class="chart-container">
-    <canvas id="all-events-by-type" />
+<h1>Ingest Stats <span id="loading">[LOADING...]</span></h1>
+<div class="main">
+  <div class="wide">
+    <div class="graph-head">
+      <h3>All Events by Type</h3>
+      <p id="all-events-by-type-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container">
+      <canvas id="all-events-by-type" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Events by World</h3>
-  <div class="chart-container">
-    <canvas id="events-by-world" />
+  <div class="wide">
+    <div class="graph-head">
+      <h3>Events by World</h3>
+    </div>
+    <div class="chart-container">
+      <canvas id="events-by-world" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Connery</h3>
-  <div class="chart-container smaller">
-    <canvas id="connery" />
+  <div>
+    <div class="graph-head">
+      <h3>Connery [US West]</h3>
+      <p id="connery-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="connery" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Miller</h3>
-  <div class="chart-container smaller">
-    <canvas id="miller" />
+  <div>
+    <div class="graph-head">
+      <h3>Miller [EU]</h3>
+      <p id="miller-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="miller" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Cobalt</h3>
-  <div class="chart-container smaller">
-    <canvas id="cobalt" />
+  <div>
+    <div class="graph-head">
+      <h3>Cobalt [EU]</h3>
+      <p id="cobalt-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="cobalt" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Emerald</h3>
-  <div class="chart-container smaller">
-    <canvas id="emerald" />
+  <div>
+    <div class="graph-head">
+      <h3>Emerald [US East]</h3>
+      <p id="emerald-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="emerald" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Jaeger</h3>
-  <div class="chart-container smaller">
-    <canvas id="jaeger" />
+  <div>
+    <div class="graph-head">
+      <h3>Jaeger [US East]</h3>
+      <p id="jaeger-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="jaeger" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>SolTech</h3>
-  <div class="chart-container smaller">
-    <canvas id="soltech" />
+  <div>
+    <div class="graph-head">
+      <h3>SolTech [Tokyo]</h3>
+      <p id="soltech-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="soltech" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Genudine</h3>
-  <div class="chart-container smaller">
-    <canvas id="genudine" />
+  <div>
+    <div class="graph-head">
+      <h3>Genudine [US East] [PS4]</h3>
+      <p id="genudine-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="genudine" />
+    </div>
   </div>
-</div>
-<div>
-  <h3>Ceres</h3>
-  <div class="chart-container smaller">
-    <canvas id="ceres" />
+  <div>
+    <div class="graph-head">
+      <h3>Ceres [EU] [PS4]</h3>
+      <p id="ceres-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container smaller">
+      <canvas id="ceres" />
+    </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/humanize-plus@1.8.2/dist/humanize.min.js"></script>
 <script>
-  const renderChart = (id, data, config = {}) => {};
+  const sumsStr = (_15m, _1h, _6h, _24h) => `
+  <span class="sums-15m" title="sum of last 15 minutes">${Humanize.intComma(
+    _15m
+  )},</span> 
+  <span class="sums-1h" title="sum of last 1 hour">${Humanize.compactInteger(
+    _1h
+  )},</span> 
+  <span class="sums-6h" title="sum of last 6 hours">${Humanize.compactInteger(
+    _6h
+  )},</span> 
+  <span class="sums-1d" title="sum of last 1 day">${Humanize.compactInteger(
+    _24h
+  )}</span>`;
+
+  const doSums = async (id, events) => {
+    // Calculate sums for the last 15 minutes, 1 hour, 6 hours, and 1 day based on event timestamps
+    let sums = [0, 0, 0, 0];
+    let now = Date.now();
+    let fifteenMinutes = 15 * 60 * 1000;
+    let oneHour = 60 * 60 * 1000;
+    let sixHours = 6 * 60 * 60 * 1000;
+    let oneDay = 24 * 60 * 60 * 1000;
+
+    for (let ev of events) {
+      let diff = now - new Date(ev.time);
+      if (diff < fifteenMinutes) {
+        sums[0] += ev.count;
+      }
+      if (diff < oneHour) {
+        sums[1] += ev.count;
+      }
+      if (diff < sixHours) {
+        sums[2] += ev.count;
+      }
+      if (diff < oneDay) {
+        sums[3] += ev.count;
+      }
+    }
+
+    document.getElementById(`${id}-sums`).innerHTML = sumsStr(...sums);
+  };
 
   const allEventsByType = (id, events) => {
+    doSums(id, events);
     let allEvents = events.reduce(
       (acc, ev) => {
         acc[ev.eventName][ev.time] = (acc[ev.time] || 0) + ev.count;
@@ -112,12 +217,10 @@
           {
             label: "Deaths",
             data: allEvents.Death,
-            // backgroundColor: "#cead42",
           },
           {
             label: "Vehicle Destroys",
             data: allEvents.VehicleDestroy,
-            // backgroundColor: "#7842ce",
           },
         ],
       },
@@ -206,6 +309,8 @@
 
     let events = body.data.analytics.events;
     window.events = events;
+
+    document.getElementById("loading").style.display = "none";
 
     allEventsByType("all-events-by-type", events);
     eventsByWorld(events);
