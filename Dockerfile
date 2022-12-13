@@ -25,7 +25,6 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # Step 3: Build the binary
 FROM rust-base as builder
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends clang
 COPY . .
 # Copy over the cached dependencies from above
 COPY --from=cacher /app/target target
