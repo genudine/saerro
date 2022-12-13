@@ -1,5 +1,4 @@
 use async_once::AsyncOnce;
-use dotenvy::dotenv;
 use lazy_static::lazy_static;
 use migrations::cmd_migrate;
 use sqlx::query;
@@ -58,8 +57,6 @@ fn cmd_help() {
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
-
     let command = args().nth(1).unwrap_or("help".to_string());
 
     match command.as_str() {
