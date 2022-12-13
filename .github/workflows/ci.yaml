@@ -18,9 +18,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          docker build . \
+          docker buildx build . \
             --build-arg SERVICE=${{ matrix.service }} \
-            -t ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
+            -t ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
+            --cache-to type=gha,scope=$GITHUB_REF_NAME-${{ matrix.service }} \
+            --cache-from type=gha,scope=$GITHUB_REF_NAME-${{ matrix.service }} .
       - run: |
           docker tag ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }} \
             ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
