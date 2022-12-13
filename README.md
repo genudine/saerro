@@ -2,7 +2,7 @@
 
 PlanetSide 2 live population API. This API is free and open for anyone to use.
 
-https://saerro.harasse.rs
+https://saerro.ps2.live
 
 tl;dr: Watch for specific events, transform and add them to a timeseries set, and query that set for the last 15 minutes.
 
@@ -19,7 +19,7 @@ An example of how it can be used on [pstop](https://pstop.harasse.rs) ([GitHub](
 ## Architecture
 
 - GraphQL API
-  - Serves https://saerro.harasse.rs
+  - Serves https://saerro.ps2.live
   - Built on a "stacking filter" graph model, where each dimension adds a filter to lower dimensions.
 - Event Streaming Service (ESS) Ingest
   - WebSocket listening to https://push.nanite-systems.net (which is a resilient mirror to https://push.planetside2.com)
