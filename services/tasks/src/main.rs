@@ -66,6 +66,18 @@ async fn main() {
             cmd_prune().await;
             tokio::time::sleep(tokio::time::Duration::from_secs(60 * 5)).await;
         },
+        "maintenance" => {
+            println!("Running maintenance tasks...");
+            println!("Checking if DB is migrated...");
+            if !migrations::is_migrated().await {
+                println!("DB is not migrated, running migrations...");
+                cmd_migrate().await;
+            }
+
+            println!("Running prune...");
+            cmd_prune().await;
+            println!("Done!");
+        }
         "migrate" => cmd_migrate().await,
         _ => {
             println!("Unknown command: {}", command);

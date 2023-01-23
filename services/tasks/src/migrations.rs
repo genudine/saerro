@@ -1,5 +1,5 @@
 use crate::PG;
-use sqlx::query;
+use sqlx::{query, Row};
 
 pub async fn cmd_migrate() {
     println!("Migrating database...");
@@ -172,4 +172,16 @@ async fn migrate_analytics() {
         .unwrap();
 
     println!("ANALYTICS => done!");
+}
+
+pub async fn is_migrated() -> bool {
+    let pool = PG.get().await;
+
+    let tables: i64 = query("SELECT count(1) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('players', 'vehicles', 'classes', 'analytics');")
+        .fetch_one(pool)
+        .await
+        .unwrap()
+        .get(0);
+
+    tables == 4
 }
