@@ -1,5 +1,6 @@
 mod analytics;
 mod classes;
+mod factions;
 mod health;
 mod population;
 mod query;

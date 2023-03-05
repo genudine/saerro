@@ -1,4 +1,7 @@
-use crate::utils::{Filters, IdOrNameBy};
+use crate::{
+    factions::{NC, TR, VS},
+    utils::{Filters, IdOrNameBy},
+};
 use async_graphql::{Context, Object};
 use sqlx::{Pool, Postgres, Row};
 
@@ -39,7 +42,7 @@ impl Vehicle {
         self.fetch(
             ctx,
             Filters {
-                faction: Some(IdOrNameBy::Id(1)),
+                faction: Some(IdOrNameBy::Id(NC)),
                 ..self.filters.clone()
             },
         )
@@ -49,7 +52,7 @@ impl Vehicle {
         self.fetch(
             ctx,
             Filters {
-                faction: Some(IdOrNameBy::Id(2)),
+                faction: Some(IdOrNameBy::Id(TR)),
                 ..self.filters.clone()
             },
         )
@@ -59,7 +62,7 @@ impl Vehicle {
         self.fetch(
             ctx,
             Filters {
-                faction: Some(IdOrNameBy::Id(3)),
+                faction: Some(IdOrNameBy::Id(VS)),
                 ..self.filters.clone()
             },
         )

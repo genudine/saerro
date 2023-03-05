@@ -1,4 +1,7 @@
-use crate::utils::Filters;
+use crate::{
+    factions::{NC, NSO, TR, VS},
+    utils::Filters,
+};
 use async_graphql::{Context, Object};
 use sqlx::{Pool, Postgres, Row};
 
@@ -58,16 +61,16 @@ impl Population {
         query
     }
     async fn nc<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
-        self.by_faction(ctx, 1).await
+        self.by_faction(ctx, NC).await
     }
     async fn vs<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
-        self.by_faction(ctx, 2).await
+        self.by_faction(ctx, VS).await
     }
     async fn tr<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
-        self.by_faction(ctx, 3).await
+        self.by_faction(ctx, TR).await
     }
     async fn ns<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
-        self.by_faction(ctx, 4).await
+        self.by_faction(ctx, NSO).await
     }
 }
 
