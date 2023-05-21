@@ -135,12 +135,18 @@ impl Vehicles {
             vehicle_name: "javelin".to_string(),
         }
     }
+    async fn corsair(&self) -> Vehicle {
+        Vehicle {
+            filters: self.filters.clone(),
+            vehicle_name: "corsair".to_string(),
+        }
+    }
 
     // Tanks
     async fn lightning(&self) -> Vehicle {
         Vehicle {
             filters: self.filters.clone(),
-            vehicle_name: "javelin".to_string(),
+            vehicle_name: "lightning".to_string(),
         }
     }
     async fn prowler(&self) -> Vehicle {
