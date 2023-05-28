@@ -1,4 +1,3 @@
-# Step -1: Grab mold
 FROM rust:1.69.0-bullseye as rust-base
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl clang
@@ -12,6 +11,8 @@ ENV RUSTFLAGS="-C link-arg=-fuse-ld=/mold"
 FROM rust-base as builder
 COPY . .
 ARG SERVICE
+ENV CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang
+ENV RUSTFLAGS="-C link-arg=-fuse-ld=/mold"
 RUN cargo build --release --bin ${SERVICE}
 
 FROM debian:bullseye-slim as runtime
