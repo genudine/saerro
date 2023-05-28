@@ -159,16 +159,16 @@
 <script src="https://cdn.jsdelivr.net/npm/humanize-plus@1.8.2/dist/humanize.min.js"></script>
 <script>
   const sumsStr = (_15m, _1h, _6h, _24h) => `
-  <span class="sums-15m" title="sum of last 15 minutes">${Humanize.intComma(
+  <span class="sums-15m" title="sum of last 15 minutes (${_15m})">${Humanize.intComma(
     _15m
   )},</span> 
-  <span class="sums-1h" title="sum of last 1 hour">${Humanize.compactInteger(
+  <span class="sums-1h" title="sum of last 1 hour (${_1h})">${Humanize.compactInteger(
     _1h
   )},</span> 
-  <span class="sums-6h" title="sum of last 6 hours">${Humanize.compactInteger(
+  <span class="sums-6h" title="sum of last 6 hours (${_6h})">${Humanize.compactInteger(
     _6h
   )},</span> 
-  <span class="sums-1d" title="sum of last 1 day">${Humanize.compactInteger(
+  <span class="sums-1d" title="sum of last 1 day (${_24h})">${Humanize.compactInteger(
     _24h
   )}</span>`;
 
