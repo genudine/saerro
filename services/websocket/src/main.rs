@@ -273,6 +273,13 @@ async fn process_exp_event(event: &Event) {
         event_name: event.event_name.clone(),
     }));
 
+    set.spawn(track_pop(PopEvent {
+        world_id: event.world_id.clone(),
+        team_id: event.team_id.clone(),
+        character_id: event.character_id.clone(),
+        zone_id: event.zone_id.clone(),
+    }));
+
     set.spawn(track_class(ClassEvent {
         world_id: event.world_id.clone(),
         character_id: event.character_id.clone(),
