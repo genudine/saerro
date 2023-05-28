@@ -7,14 +7,14 @@ edition = "2021"
 
 [dependencies]
 lazy_static = "1.4.0"
-tokio-tungstenite = { version = "0.18.0", features=["rustls-tls-webpki-roots"] }
-serde = { version = "1.0.152", features = ["derive"] }
-serde_json = "1.0.91"
-tokio = { version = "1.24.2", features = ["macros", "rt-multi-thread"] }
-sqlx = { version = "0.6.2", default_features = false, features = [ "runtime-tokio-rustls" , "postgres" ] }
+tokio-tungstenite = { version = "0.19.0", features=["rustls-tls-webpki-roots"] }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = "1.0.96"
+tokio = { version = "1.28.1", features = ["macros", "rt-multi-thread"] }
+sqlx = { version = "0.6.3", default_features = false, features = [ "runtime-tokio-rustls" , "postgres" ] }
 url = "2.3.1"
-futures-util = "0.3.25"
-futures = "0.3.25"
+futures-util = "0.3.28"
+futures = "0.3.28"
 async_once = "0.2.6"
-serde-aux = "4.1.2"
-axum = "0.6.3"
+serde-aux = "4.2.0"
+axum = "0.6.18"
