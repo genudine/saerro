@@ -26,7 +26,12 @@ async fn send_init(tx: futures::channel::mpsc::UnboundedSender<Message>) {
     let worlds_raw = env::var("WORLDS").unwrap_or("all".to_string());
     let worlds: Vec<&str> = worlds_raw.split(',').collect();
 
-    let experience_ids = vec![5, 6, 7, 36, 53, 54, 201, 233, 293, 294, 353, 354, 355];
+    let experience_ids = vec![
+        2, 3, 4, 5, 6, 7, 34, 36, 51, 53, 54, 55, 57, 86, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97,
+        98, 99, 100, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 201,
+        233, 293, 294, 302, 303, 353, 354, 355, 438, 439, 503, 505, 579, 581, 584, 653, 656, 674,
+        675,
+    ];
     let mut events = experience_ids
         .iter()
         .map(|id| format!("GainExperience_experience_id_{}", id))
@@ -293,6 +298,16 @@ async fn process_exp_event(event: &Event) {
             set.spawn(track_vehicle(VehicleEvent {
                 world_id: event.world_id.clone(),
                 vehicle_id: "2".to_string(),
+                character_id: event.character_id.clone(),
+                zone_id: event.zone_id.clone(),
+                team_id: event.team_id.clone(),
+            }));
+        }
+        674 | 675 => {
+            // ANT stuff
+            set.spawn(track_vehicle(VehicleEvent {
+                world_id: event.world_id.clone(),
+                vehicle_id: "160".to_string(),
                 character_id: event.character_id.clone(),
                 zone_id: event.zone_id.clone(),
                 team_id: event.team_id.clone(),
