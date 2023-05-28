@@ -207,7 +207,7 @@
         acc[ev.eventName][ev.time] = (acc[ev.time] || 0) + ev.count;
         return acc;
       },
-      { Death: {}, VehicleDestroy: {} }
+      { Death: {}, VehicleDestroy: {}, GainExperience: {} }
     );
 
     new Chart(document.getElementById(id), {
@@ -227,6 +227,10 @@
           {
             label: "Vehicle Destroys",
             data: allEvents.VehicleDestroy,
+          },
+          {
+            label: "Experience Events",
+            data: allEvents.GainExperience,
           },
         ],
       },

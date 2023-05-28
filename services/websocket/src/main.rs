@@ -26,11 +26,20 @@ async fn send_init(tx: futures::channel::mpsc::UnboundedSender<Message>) {
     let worlds_raw = env::var("WORLDS").unwrap_or("all".to_string());
     let worlds: Vec<&str> = worlds_raw.split(',').collect();
 
+    let experience_ids = vec![5, 6, 7, 36, 53, 54, 201, 233, 293, 294, 353, 354, 355];
+    let mut events = experience_ids
+        .iter()
+        .map(|id| format!("GainExperience_experience_id_{}", id))
+        .collect::<Vec<String>>();
+
+    events.push("Death".to_string());
+    events.push("VehicleDestroy".to_string());
+
     // Send setup message
     let setup_msg = json!({
         "action": "subscribe",
         "worlds": worlds,
-        "eventNames": ["Death", "VehicleDestroy"],
+        "eventNames": events,
         "characters": ["all"],
         "logicalAndCharactersWithWorlds": true,
         "service": "event",
@@ -176,7 +185,7 @@ async fn track_analytics(analytics_event: AnalyticsEvent) {
         .unwrap();
 }
 
-async fn process_event(event: &Event) {
+async fn process_death_event(event: &Event) {
     let mut set = JoinSet::new();
     // println!("[ws/process_event] EVENT: {:?}", event);
 
@@ -250,12 +259,57 @@ async fn process_event(event: &Event) {
     while let Some(_) = set.join_next().await {}
 }
 
+async fn process_exp_event(event: &Event) {
+    let mut set = JoinSet::new();
+    // println!("[ws/process_event] EVENT: {:?}", event);
+
+    set.spawn(track_analytics(AnalyticsEvent {
+        world_id: event.world_id.clone(),
+        event_name: event.event_name.clone(),
+    }));
+
+    set.spawn(track_class(ClassEvent {
+        world_id: event.world_id.clone(),
+        character_id: event.character_id.clone(),
+        loadout_id: event.loadout_id.clone(),
+        zone_id: event.zone_id.clone(),
+        team_id: event.team_id.clone(),
+    }));
+
+    // Vehicle EXP events
+    match event.experience_id {
+        201 => {
+            // Galaxy Spawn Bonus
+            set.spawn(track_vehicle(VehicleEvent {
+                world_id: event.world_id.clone(),
+                vehicle_id: "11".to_string(),
+                character_id: event.character_id.clone(),
+                zone_id: event.zone_id.clone(),
+                team_id: event.team_id.clone(),
+            }));
+        }
+        233 => {
+            // Sunderer Spawn Bonus
+            set.spawn(track_vehicle(VehicleEvent {
+                world_id: event.world_id.clone(),
+                vehicle_id: "2".to_string(),
+                character_id: event.character_id.clone(),
+                zone_id: event.zone_id.clone(),
+                team_id: event.team_id.clone(),
+            }));
+        }
+        _ => {}
+    }
+
+    while let Some(_) = set.join_next().await {}
+}
 #[derive(Deserialize, Debug, Clone, Default)]
 struct Event {
     event_name: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     world_id: i32,
     character_id: String,
+    #[serde(default)]
     attacker_character_id: String,
     #[serde(default, deserialize_with = "deserialize_number_from_string")]
     attacker_team_id: i32,
@@ -275,6 +329,11 @@ struct Event {
     vehicle_id: String,
     #[serde(default)]
     attacker_vehicle_id: String,
+
+    #[serde(default, deserialize_with = "deserialize_number_from_string")]
+    experience_id: i32,
+    #[serde(default)]
+    other_id: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -336,7 +395,15 @@ async fn main() {
                 return;
             }
 
-            process_event(&data.payload).await;
+            if data.payload.event_name == "Death" || data.payload.event_name == "VehicleDestroy" {
+                process_death_event(&data.payload).await;
+                return;
+            }
+
+            if data.payload.event_name == "GainExperience" {
+                process_exp_event(&data.payload).await;
+                return;
+            }
         })
         .fuse();
 
