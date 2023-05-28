@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 use serde::Deserialize;
 use serde_aux::prelude::*;
 use serde_json::json;
-use sqlx::{postgres::PgPoolOptions, query};
+use sqlx::{postgres::PgPoolOptions, query, Row};
 use std::{env, net::SocketAddr};
 use tokio::task::JoinSet;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
@@ -54,6 +54,7 @@ async fn send_init(tx: futures::channel::mpsc::UnboundedSender<Message>) {
         .unwrap();
 
     println!("[ws] Sent setup message");
+    println!("[ws/setup] {}", setup_msg.to_string())
 }
 
 #[derive(Clone)]
@@ -83,6 +84,22 @@ struct ClassEvent {
 struct AnalyticsEvent {
     world_id: i32,
     event_name: String,
+}
+
+async fn get_team_id(character_id: String) -> Result<i32, sqlx::Error> {
+    let pool = PG.get().await;
+
+    let team_id: i32 = query("SELECT faction_id FROM players WHERE character_id = $1 LIMIT 1;")
+        .bind(character_id.clone())
+        .fetch_one(pool)
+        .await?
+        .get(0);
+
+    if team_id == 0 {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    Ok(team_id)
 }
 
 async fn track_pop(pop_event: PopEvent) {
@@ -335,7 +352,7 @@ struct Event {
     attacker_character_id: String,
     #[serde(default, deserialize_with = "deserialize_number_from_string")]
     attacker_team_id: i32,
-    #[serde(deserialize_with = "deserialize_number_from_string")]
+    #[serde(default, deserialize_with = "deserialize_number_from_string")]
     team_id: i32,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     zone_id: i32,
@@ -354,8 +371,8 @@ struct Event {
 
     #[serde(default, deserialize_with = "deserialize_number_from_string")]
     experience_id: i32,
-    #[serde(default)]
-    other_id: String,
+    // #[serde(default)]
+    // other_id: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -396,6 +413,8 @@ async fn main() {
     }
     let url = url::Url::parse(&addr).unwrap();
 
+    println!("[ws] Connecting to {}", url);
+
     let (tx, rx) = futures::channel::mpsc::unbounded();
     let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
     let (write, read) = ws_stream.split();
@@ -405,7 +424,7 @@ async fn main() {
         .for_each(|msg| async {
             let body = &msg.unwrap().to_string();
 
-            let data: Payload = match serde_json::from_str(body) {
+            let mut data: Payload = match serde_json::from_str(body) {
                 Ok(data) => data,
                 Err(_) => {
                     // println!("Error: {}; body: {}", e, body.clone());
@@ -423,6 +442,14 @@ async fn main() {
             }
 
             if data.payload.event_name == "GainExperience" {
+                if data.payload.team_id == 0 {
+                    match get_team_id(data.payload.character_id.clone()).await {
+                        Ok(team_id) => {
+                            data.payload.team_id = team_id;
+                        }
+                        Err(_) => {}
+                    }
+                }
                 process_exp_event(&data.payload).await;
                 return;
             }
