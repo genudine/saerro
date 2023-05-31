@@ -16,7 +16,7 @@ impl Class {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
         let sql = format!(
-            "SELECT count(distinct character_id) FROM classes WHERE time > now() - interval '15 minutes' AND class_id = $1 {};",
+            "SELECT count(distinct character_id) FROM players WHERE time > now() - interval '15 minutes' AND class_id = $1 {};",
             filters.sql(),
         );
 

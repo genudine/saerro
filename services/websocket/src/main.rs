@@ -27,10 +27,9 @@ async fn send_init(tx: futures::channel::mpsc::UnboundedSender<Message>) {
     let worlds: Vec<&str> = worlds_raw.split(',').collect();
 
     let experience_ids = vec![
-        2, 3, 4, 5, 6, 7, 34, 51, 53, 55, 57, 86, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97,
-        98, 99, 100, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 201,
-        233, 293, 294, 302, 303, 353, 354, 355, 438, 439, 503, 505, 579, 581, 584, 653, 656, 674,
-        675,
+        2, 3, 4, 5, 6, 7, 34, 51, 53, 55, 57, 86, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+        100, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 201, 233, 293,
+        294, 302, 303, 353, 354, 355, 438, 439, 503, 505, 579, 581, 584, 653, 656, 674, 675,
     ];
     let mut events = experience_ids
         .iter()
@@ -63,22 +62,8 @@ struct PopEvent {
     team_id: i32,
     character_id: String,
     zone_id: i32,
-}
-
-struct VehicleEvent {
-    world_id: i32,
-    vehicle_id: String,
-    character_id: String,
-    zone_id: i32,
-    team_id: i32,
-}
-
-struct ClassEvent {
-    world_id: i32,
-    character_id: String,
     loadout_id: String,
-    zone_id: i32,
-    team_id: i32,
+    vehicle_id: String,
 }
 
 struct AnalyticsEvent {
@@ -111,83 +96,27 @@ async fn track_pop(pop_event: PopEvent) {
         team_id,
         character_id,
         zone_id,
+        loadout_id,
+        vehicle_id,
     } = pop_event;
 
-    query("INSERT INTO players (time, character_id, world_id, faction_id, zone_id) VALUES (now(), $1, $2, $3, $4);")
+    let class_name = translators::loadout_to_class(loadout_id.as_str());
+    let vehicle_name = if vehicle_id == "" {
+        "unknown".to_string()
+    } else {
+        translators::vehicle_to_name(vehicle_id.as_str())
+    };
+
+    query("INSERT INTO players (time, character_id, world_id, faction_id, zone_id, class_id, vehicle_id) VALUES (now(), $1, $2, $3, $4, $5, $6);")
         .bind(character_id)
         .bind(world_id)
         .bind(team_id)
         .bind(zone_id)
+        .bind(class_name)
+        .bind(vehicle_name)
         .execute(pool)
         .await
         .unwrap();
-}
-
-async fn track_vehicle(vehicle_event: VehicleEvent) {
-    // println!("[ws/track_vehicle]");
-    let pool = PG.get().await;
-
-    let VehicleEvent {
-        world_id,
-        vehicle_id,
-        zone_id,
-        character_id,
-        team_id,
-    } = vehicle_event;
-
-    let vehicle_name = translators::vehicle_to_name(vehicle_id.as_str());
-
-    if vehicle_name == "unknown" {
-        return;
-    }
-
-    query("INSERT INTO vehicles (time, character_id, world_id, faction_id, zone_id, vehicle_id) VALUES (now(), $1, $2, $3, $4, $5);")
-    .bind(character_id)
-    .bind(world_id)
-    .bind(team_id)
-    .bind(zone_id)
-    .bind(vehicle_name)
-    .execute(pool)
-    .await
-    .unwrap();
-}
-
-async fn track_class(class_event: ClassEvent) {
-    // println!("[ws/track_class]");
-    let pool = PG.get().await;
-
-    let ClassEvent {
-        world_id,
-        character_id,
-        loadout_id,
-        zone_id,
-        team_id,
-    } = class_event;
-
-    let class_name = translators::loadout_to_class(loadout_id.as_str());
-
-    if class_name == "unknown" {
-        return;
-    }
-
-    query(
-        "INSERT INTO classes (
-        time, 
-        character_id, 
-        world_id, 
-        faction_id, 
-        zone_id, 
-        class_id
-    ) VALUES (now(), $1, $2, $3, $4, $5);",
-    )
-    .bind(character_id)
-    .bind(world_id)
-    .bind(team_id)
-    .bind(zone_id)
-    .bind(class_name)
-    .execute(pool)
-    .await
-    .unwrap();
 }
 
 async fn track_analytics(analytics_event: AnalyticsEvent) {
@@ -216,33 +145,14 @@ async fn process_death_event(event: &Event) {
         event_name: event.event_name.clone(),
     }));
 
-    if event.character_id != "0" {
-        // General population tracking
+    if event.character_id != "" && event.character_id != "0" {
         set.spawn(track_pop(PopEvent {
             world_id: event.world_id.clone(),
             team_id: event.team_id.clone(),
             character_id: event.character_id.clone(),
             zone_id: event.zone_id.clone(),
-        }));
-    }
-
-    if event.event_name == "VehicleDestroy" {
-        set.spawn(track_vehicle(VehicleEvent {
-            world_id: event.world_id.clone(),
-            vehicle_id: event.vehicle_id.clone(),
-            character_id: event.character_id.clone(),
-            zone_id: event.zone_id.clone(),
-            team_id: event.team_id.clone(),
-        }));
-    }
-
-    if event.event_name == "Death" {
-        set.spawn(track_class(ClassEvent {
-            world_id: event.world_id.clone(),
-            character_id: event.character_id.clone(),
             loadout_id: event.loadout_id.clone(),
-            zone_id: event.zone_id.clone(),
-            team_id: event.team_id.clone(),
+            vehicle_id: event.vehicle_id.clone(),
         }));
     }
 
@@ -255,27 +165,9 @@ async fn process_death_event(event: &Event) {
             team_id: event.attacker_team_id.clone(),
             character_id: event.attacker_character_id.clone(),
             zone_id: event.zone_id.clone(),
+            loadout_id: event.attacker_loadout_id.clone(),
+            vehicle_id: event.attacker_vehicle_id.clone(),
         }));
-
-        if event.event_name == "VehicleDestroy" {
-            set.spawn(track_vehicle(VehicleEvent {
-                world_id: event.world_id.clone(),
-                vehicle_id: event.attacker_vehicle_id.clone(),
-                character_id: event.attacker_character_id.clone(),
-                zone_id: event.zone_id.clone(),
-                team_id: event.attacker_team_id.clone(),
-            }));
-        }
-
-        if event.event_name == "Death" {
-            set.spawn(track_class(ClassEvent {
-                world_id: event.world_id.clone(),
-                character_id: event.attacker_character_id.clone(),
-                loadout_id: event.attacker_loadout_id.clone(),
-                zone_id: event.zone_id.clone(),
-                team_id: event.attacker_team_id.clone(),
-            }));
-        }
     }
 
     while let Some(_) = set.join_next().await {}
@@ -290,55 +182,22 @@ async fn process_exp_event(event: &Event) {
         event_name: event.event_name.clone(),
     }));
 
+    // Vehicle EXP events
+    let vehicle_id = match event.experience_id {
+        201 => "11".to_string(),        // Galaxy Spawn Bonus
+        233 => "2".to_string(),         // Sunderer Spawn Bonus
+        674 | 675 => "160".to_string(), // ANT stuff
+        _ => "".to_string(),
+    };
+
     set.spawn(track_pop(PopEvent {
         world_id: event.world_id.clone(),
         team_id: event.team_id.clone(),
         character_id: event.character_id.clone(),
         zone_id: event.zone_id.clone(),
-    }));
-
-    set.spawn(track_class(ClassEvent {
-        world_id: event.world_id.clone(),
-        character_id: event.character_id.clone(),
         loadout_id: event.loadout_id.clone(),
-        zone_id: event.zone_id.clone(),
-        team_id: event.team_id.clone(),
+        vehicle_id: vehicle_id.clone(),
     }));
-
-    // Vehicle EXP events
-    match event.experience_id {
-        201 => {
-            // Galaxy Spawn Bonus
-            set.spawn(track_vehicle(VehicleEvent {
-                world_id: event.world_id.clone(),
-                vehicle_id: "11".to_string(),
-                character_id: event.character_id.clone(),
-                zone_id: event.zone_id.clone(),
-                team_id: event.team_id.clone(),
-            }));
-        }
-        233 => {
-            // Sunderer Spawn Bonus
-            set.spawn(track_vehicle(VehicleEvent {
-                world_id: event.world_id.clone(),
-                vehicle_id: "2".to_string(),
-                character_id: event.character_id.clone(),
-                zone_id: event.zone_id.clone(),
-                team_id: event.team_id.clone(),
-            }));
-        }
-        674 | 675 => {
-            // ANT stuff
-            set.spawn(track_vehicle(VehicleEvent {
-                world_id: event.world_id.clone(),
-                vehicle_id: "160".to_string(),
-                character_id: event.character_id.clone(),
-                zone_id: event.zone_id.clone(),
-                team_id: event.team_id.clone(),
-            }));
-        }
-        _ => {}
-    }
 
     while let Some(_) = set.join_next().await {}
 }

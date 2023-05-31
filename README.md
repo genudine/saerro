@@ -48,7 +48,7 @@ cargo run --bin tasks migrate
 # Start NSS ingest. Use push.planetside2.com if NSS isn't quite working...
 env \
   WS_ADDR="wss://push.nanite-systems.net/streaming?environment=all&service-id=s:$SERVICE_ID" \
-  WORLDS=all
+  WORLDS=all \
   cargo run --bin websocket
 
 # Start API

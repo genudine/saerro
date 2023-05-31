@@ -25,20 +25,6 @@ async fn cmd_prune() {
         .rows_affected();
     println!("Deleted {} rows of old player data", rows);
 
-    let rows = query("DELETE FROM classes WHERE time < NOW() - INTERVAL '15 minutes';")
-        .execute(pool)
-        .await
-        .unwrap()
-        .rows_affected();
-    println!("Deleted {} rows of old class data", rows);
-
-    let rows = query("DELETE FROM vehicles WHERE time < NOW() - INTERVAL '15 minutes';")
-        .execute(pool)
-        .await
-        .unwrap()
-        .rows_affected();
-    println!("Deleted {} rows of old vehicle data", rows);
-
     let rows = query("DELETE FROM analytics WHERE time < NOW() - INTERVAL '1 day';")
         .execute(pool)
         .await

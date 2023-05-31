@@ -4,12 +4,7 @@ use sqlx::{query, Row};
 pub async fn cmd_migrate() {
     println!("Migrating database...");
 
-    tokio::join!(
-        migrate_players(),
-        migrate_classes(),
-        migrate_vehicles(),
-        migrate_analytics()
-    );
+    tokio::join!(migrate_players(), migrate_analytics());
 }
 
 async fn migrate_players() {
@@ -30,7 +25,10 @@ async fn migrate_players() {
         time TIMESTAMPTZ NOT NULL,
         world_id INT NOT NULL,
         faction_id INT NOT NULL,
-        zone_id INT NOT NULL);",
+        zone_id INT NOT NULL,
+        class_id TEXT NOT NULL,
+        vehicle_id TEXT NOT NULL
+        );",
     )
     .execute(pool)
     .await
@@ -52,93 +50,6 @@ async fn migrate_players() {
         .unwrap();
 
     println!("PLAYERS => done!");
-}
-
-async fn migrate_classes() {
-    let pool = PG.get().await;
-
-    println!("-> Migrating classes");
-
-    println!("CLASSES => DROP TABLE IF EXISTS classes");
-    query("DROP TABLE IF EXISTS classes")
-        .execute(pool)
-        .await
-        .unwrap();
-
-    println!("CLASSES => CREATE TABLE classes");
-    query(
-        "CREATE TABLE classes (
-        character_id TEXT NOT NULL,
-        time TIMESTAMPTZ NOT NULL,
-        world_id INT NOT NULL,
-        faction_id INT NOT NULL,
-        zone_id INT NOT NULL, 
-        class_id TEXT NOT NULL);",
-    )
-    .execute(pool)
-    .await
-    .unwrap();
-
-    println!("CLASSES => create_hypertable");
-    query(
-        "SELECT create_hypertable('classes', 'time', 
-            chunk_time_interval => INTERVAL '5 minutes', if_not_exists => TRUE);",
-    )
-    .execute(pool)
-    .await
-    .unwrap();
-
-    println!("CLASSES => add_retention_policy");
-    query("SELECT add_retention_policy('classes', INTERVAL '15 minutes');")
-        .execute(pool)
-        .await
-        .unwrap();
-
-    println!("CLASSES => done!");
-}
-
-async fn migrate_vehicles() {
-    let pool = PG.get().await;
-
-    println!("-> Migrating vehicles");
-
-    println!("VEHICLES => DROP TABLE IF EXISTS vehicles");
-    query("DROP TABLE IF EXISTS vehicles")
-        .execute(pool)
-        .await
-        .unwrap();
-
-    println!("VEHICLES => CREATE TABLE vehicles");
-    query(
-        "CREATE TABLE vehicles (
-        character_id TEXT NOT NULL,
-        time TIMESTAMPTZ NOT NULL,
-        world_id INT NOT NULL,
-        faction_id INT NOT NULL,
-        zone_id INT NOT NULL, 
-        vehicle_id TEXT NOT NULL);",
-    )
-    .execute(pool)
-    .await
-    .unwrap();
-
-    println!("VEHICLES => create_hypertable");
-    query(
-        "SELECT create_hypertable('vehicles', 'time', 
-            chunk_time_interval => INTERVAL '5 minutes', if_not_exists => TRUE);",
-    )
-    .execute(pool)
-    .await
-    .unwrap();
-
-    println!("VEHICLES => add_retention_policy");
-
-    query("SELECT add_retention_policy('vehicles', INTERVAL '15 minutes');")
-        .execute(pool)
-        .await
-        .unwrap();
-
-    println!("VEHICLES => done!");
 }
 
 async fn migrate_analytics() {
@@ -177,11 +88,11 @@ async fn migrate_analytics() {
 pub async fn is_migrated() -> bool {
     let pool = PG.get().await;
 
-    let tables: i64 = query("SELECT count(1) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('players', 'vehicles', 'classes', 'analytics');")
+    let tables: i64 = query("SELECT count(1) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('players', 'analytics');")
         .fetch_one(pool)
         .await
         .unwrap()
         .get(0);
 
-    tables == 4
+    tables == 2
 }
