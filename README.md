@@ -23,9 +23,9 @@ An example of how it can be used on [pstop](https://pstop.harasse.rs) ([GitHub](
   - Built on a "stacking filter" graph model, where each dimension adds a filter to lower dimensions.
 - Event Streaming Service (ESS) Ingest
   - WebSocket listening to https://push.nanite-systems.net (which is a resilient mirror to https://push.planetside2.com)
-  - Listens for `Death`, `VehicleDestroy`, and possibly other events
+  - Listens for `Death`, `VehicleDestroy`, and a number of `GainExperience` events.
 - Postgres with TimescaleDB
-  - Holds `players`, `vehicles`, `classes`, and also `analytics` tables as hypertables.
+  - Holds `players` and `analytics` tables as hypertables.
   - Timescale makes this way too fast, mind-blowing :)
 - Tasks
   - Occasional jobs that prune the database past what we actually want to retain,
