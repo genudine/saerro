@@ -39,7 +39,7 @@ async fn migrate_players() {
     println!("PLAYERS => create_hypertable");
     query(
         "SELECT create_hypertable('players', 'time',
-            chunk_time_interval => INTERVAL '1 minute', if_not_exists => TRUE);",
+            chunk_time_interval => INTERVAL '5 minutes', if_not_exists => TRUE);",
     )
     .execute(pool)
     .await
@@ -82,7 +82,7 @@ async fn migrate_classes() {
     println!("CLASSES => create_hypertable");
     query(
         "SELECT create_hypertable('classes', 'time', 
-            chunk_time_interval => INTERVAL '1 minute', if_not_exists => TRUE);",
+            chunk_time_interval => INTERVAL '5 minutes', if_not_exists => TRUE);",
     )
     .execute(pool)
     .await
@@ -125,7 +125,7 @@ async fn migrate_vehicles() {
     println!("VEHICLES => create_hypertable");
     query(
         "SELECT create_hypertable('vehicles', 'time', 
-            chunk_time_interval => INTERVAL '1 minute', if_not_exists => TRUE);",
+            chunk_time_interval => INTERVAL '5 minutes', if_not_exists => TRUE);",
     )
     .execute(pool)
     .await
