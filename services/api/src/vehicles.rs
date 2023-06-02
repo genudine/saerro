@@ -16,7 +16,7 @@ impl Vehicle {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
         let sql = format!(
-            "SELECT count(distinct character_id) FROM players WHERE time > now() - interval '15 minutes' AND vehicle_id = $1 {};",
+            "SELECT count(*) FROM vehicles WHERE last_updated > now() - interval '15 minutes' AND vehicle_name = $1 {};",
             filters.sql(),
         );
 
@@ -89,7 +89,7 @@ impl Vehicles {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
         let sql = format!(
-            "SELECT count(distinct character_id) FROM players WHERE time > now() - interval '15 minutes' AND vehicle_id != 'unknown' {};",
+            "SELECT count(*) FROM vehicles WHERE last_updated > now() - interval '15 minutes' {};",
             self.filters.sql(),
         );
 

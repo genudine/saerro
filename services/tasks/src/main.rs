@@ -18,12 +18,19 @@ async fn cmd_prune() {
     println!("Pruning old data...");
     let pool = PG.get().await;
 
-    let rows = query("DELETE FROM players WHERE time < NOW() - INTERVAL '15 minutes';")
+    let rows = query("DELETE FROM players WHERE last_updated < NOW() - INTERVAL '15 minutes';")
         .execute(pool)
         .await
         .unwrap()
         .rows_affected();
     println!("Deleted {} rows of old player data", rows);
+
+    let rows = query("DELETE FROM vehicles WHERE last_updated < NOW() - INTERVAL '15 minutes';")
+        .execute(pool)
+        .await
+        .unwrap()
+        .rows_affected();
+    println!("Deleted {} rows of old vehicle data", rows);
 
     let rows = query("DELETE FROM analytics WHERE time < NOW() - INTERVAL '1 day';")
         .execute(pool)

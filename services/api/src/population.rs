@@ -23,7 +23,7 @@ impl Population {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
         let sql = format!(
-            "SELECT count(distinct character_id) FROM players WHERE time > now() - interval '15 minutes' AND faction_id = $1 {};",
+            "SELECT count(*) FROM players WHERE last_updated > now() - interval '15 minutes' AND faction_id = $1 {};",
             self.filters.sql(),
         );
 
@@ -46,7 +46,7 @@ impl Population {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
         let sql = format!(
-            "SELECT count(distinct character_id) FROM players WHERE time > now() - interval '15 minutes' {};",
+            "SELECT count(*) FROM players WHERE last_updated > now() - interval '15 minutes' {};",
             self.filters.sql(),
         );
 

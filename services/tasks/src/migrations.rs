@@ -4,7 +4,7 @@ use sqlx::{query, Row};
 pub async fn cmd_migrate() {
     println!("Migrating database...");
 
-    tokio::join!(migrate_players(), migrate_analytics());
+    tokio::join!(migrate_players(), migrate_vehicles(), migrate_analytics());
 }
 
 async fn migrate_players() {
@@ -21,35 +21,48 @@ async fn migrate_players() {
     println!("PLAYERS => CREATE TABLE players");
     query(
         "CREATE TABLE players (
-        character_id TEXT NOT NULL,
-        time TIMESTAMPTZ NOT NULL,
+        character_id TEXT NOT NULL PRIMARY KEY,
+        last_updated TIMESTAMPTZ NOT NULL,
         world_id INT NOT NULL,
         faction_id INT NOT NULL,
         zone_id INT NOT NULL,
-        class_id TEXT NOT NULL,
-        vehicle_id TEXT NOT NULL
+        class_name TEXT NOT NULL
         );",
     )
     .execute(pool)
     .await
     .unwrap();
 
-    println!("PLAYERS => create_hypertable");
+    println!("PLAYERS => done!");
+}
+
+async fn migrate_vehicles() {
+    let pool = PG.get().await;
+
+    println!("-> Migrating vehicles");
+
+    println!("VEHICLES => DROP TABLE IF EXISTS vehicles");
+    query("DROP TABLE IF EXISTS vehicles")
+        .execute(pool)
+        .await
+        .unwrap();
+
+    println!("VEHICLES => CREATE TABLE vehicles");
     query(
-        "SELECT create_hypertable('players', 'time',
-            chunk_time_interval => INTERVAL '5 minutes', if_not_exists => TRUE);",
+        "CREATE TABLE vehicles (
+        character_id TEXT NOT NULL PRIMARY KEY,
+        last_updated TIMESTAMPTZ NOT NULL,
+        world_id INT NOT NULL,
+        faction_id INT NOT NULL,
+        zone_id INT NOT NULL,
+        vehicle_name TEXT NOT NULL
+        );",
     )
     .execute(pool)
     .await
     .unwrap();
 
-    println!("PLAYERS => add_retention_policy");
-    query("SELECT add_retention_policy('players', INTERVAL '15 minutes');")
-        .execute(pool)
-        .await
-        .unwrap();
-
-    println!("PLAYERS => done!");
+    println!("VEHICLES => done!");
 }
 
 async fn migrate_analytics() {
@@ -88,11 +101,11 @@ async fn migrate_analytics() {
 pub async fn is_migrated() -> bool {
     let pool = PG.get().await;
 
-    let tables: i64 = query("SELECT count(1) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('players', 'analytics');")
+    let tables: i64 = query("SELECT count(1) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('players', 'vehicles', 'analytics');")
         .fetch_one(pool)
         .await
         .unwrap()
         .get(0);
 
-    tables == 2
+    tables == 3
 }

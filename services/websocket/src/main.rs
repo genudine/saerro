@@ -107,16 +107,46 @@ async fn track_pop(pop_event: PopEvent) {
         translators::vehicle_to_name(vehicle_id.as_str())
     };
 
-    query("INSERT INTO players (time, character_id, world_id, faction_id, zone_id, class_id, vehicle_id) VALUES (now(), $1, $2, $3, $4, $5, $6);")
+    query(
+        "
+        INSERT INTO players (last_updated, character_id, world_id, faction_id, zone_id, class_name) 
+        VALUES (now(), $1, $2, $3, $4, $5) 
+        ON CONFLICT (character_id) DO UPDATE SET 
+            last_updated = EXCLUDED.last_updated,
+            world_id = EXCLUDED.world_id,
+            faction_id = EXCLUDED.faction_id,
+            zone_id = EXCLUDED.zone_id,
+            class_name = EXCLUDED.class_name
+    ;",
+    )
+    .bind(character_id.clone())
+    .bind(world_id)
+    .bind(team_id)
+    .bind(zone_id)
+    .bind(class_name)
+    .execute(pool)
+    .await
+    .unwrap();
+
+    if vehicle_name != "unknown" {
+        query("INSERT INTO vehicles (last_updated, character_id, world_id, faction_id, zone_id, vehicle_name) 
+        VALUES (now(), $1, $2, $3, $4, $5) 
+        ON CONFLICT (character_id) DO UPDATE SET
+            last_updated = EXCLUDED.last_updated,
+            world_id = EXCLUDED.world_id,
+            faction_id = EXCLUDED.faction_id,
+            zone_id = EXCLUDED.zone_id,
+            vehicle_name = EXCLUDED.vehicle_name
+    ;")
         .bind(character_id)
         .bind(world_id)
         .bind(team_id)
         .bind(zone_id)
-        .bind(class_name)
         .bind(vehicle_name)
         .execute(pool)
         .await
         .unwrap();
+    }
 }
 
 async fn track_analytics(analytics_event: AnalyticsEvent) {
