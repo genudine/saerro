@@ -150,10 +150,24 @@
   <div class="wide">
     <div class="graph-head">
       <h3>Experience Events By ID</h3>
-      <p class="exp-sums">(0, 0, 0, 0)</p>
+      <p class="exp-by-id-sums">(0, 0, 0, 0)</p>
     </div>
     <div class="chart-container">
       <canvas id="exp-by-id" />
+    </div>
+    <div class="filter">
+      Filter to World:
+      <select id="exp-filter">
+        <option selected value="all">All</option>
+        <option value="1">Connery</option>
+        <option value="10">Miller</option>
+        <option value="13">Cobalt</option>
+        <option value="17">Emerald</option>
+        <option value="19">Jaeger</option>
+        <option value="40">SolTech</option>
+        <option value="1000">Genudine</option>
+        <option value="2000">Ceres</option>
+      </select>
     </div>
   </div>
 </div>
@@ -383,6 +397,22 @@
       let worldEvents = events.filter((ev) => ev.worldId === id);
       allEventsByType(world, worldEvents);
     });
-    experienceEventsByID(events);
+
+    const expFilter = document.getElementById("exp-filter");
+    experienceEventsByID(
+      expFilter.value === "all"
+        ? events
+        : events.filter((ev) => ev.worldId === parseInt(expFilter.value))
+    );
+
+    expFilter.addEventListener("change", () => {
+      document.getElementById("exp-by-id").outerHTML =
+        "<canvas id='exp-by-id' />";
+      experienceEventsByID(
+        expFilter.value === "all"
+          ? events
+          : events.filter((ev) => ev.worldId === parseInt(expFilter.value))
+      );
+    });
   })();
 </script>
