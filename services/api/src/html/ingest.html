@@ -150,7 +150,7 @@
   <div class="wide">
     <div class="graph-head">
       <h3>Experience Events By ID</h3>
-      <p class="exp-by-id-sums">(0, 0, 0, 0)</p>
+      <p id="exp-by-id-sums">(0, 0, 0, 0)</p>
     </div>
     <div class="chart-container">
       <canvas id="exp-by-id" />
@@ -280,7 +280,7 @@
       type: "bar",
       options: {
         scales: {
-          y: { beginAtZero: true, suggestedMin: 0 },
+          y: { stacked: true, beginAtZero: true, suggestedMin: 0 },
           x: { stacked: true, type: "timeseries" },
         },
       },
