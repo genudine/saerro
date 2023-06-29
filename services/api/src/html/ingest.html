@@ -147,6 +147,15 @@
       <canvas id="ceres" />
     </div>
   </div>
+  <div class="wide">
+    <div class="graph-head">
+      <h3>Experience Events By ID</h3>
+      <p class="exp-sums">(0, 0, 0, 0)</p>
+    </div>
+    <div class="chart-container">
+      <canvas id="exp-by-id" />
+    </div>
+  </div>
 </div>
 <p>
   [<a href="/">home</a>] [<a href="/ingest">1 day w/ 5m buckets</a>] [<a
@@ -204,7 +213,9 @@
     doSums(id, events);
     let allEvents = events.reduce(
       (acc, ev) => {
-        acc[ev.eventName][ev.time] = (acc[ev.time] || 0) + ev.count;
+        const eventName = ev.eventName.replace(/_[0-9]+/g, "");
+        acc[eventName][ev.time] = acc[eventName][ev.time] ?? 0;
+        acc[eventName][ev.time] += ev.count;
         return acc;
       },
       { Death: {}, VehicleDestroy: {}, GainExperience: {} }
@@ -215,7 +226,7 @@
       options: {
         scales: {
           y: { beginAtZero: true, suggestedMin: 0 },
-          x: { stacked: true, type: "timeseries" },
+          x: { stacked: false, type: "timeseries" },
         },
       },
       data: {
@@ -233,6 +244,37 @@
             data: allEvents.GainExperience,
           },
         ],
+      },
+    });
+  };
+
+  const experienceEventsByID = (eventsUnfiltered) => {
+    const events = eventsUnfiltered.filter((ev) =>
+      ev.eventName.startsWith("GainExperience_")
+    );
+
+    doSums("exp-by-id", events);
+    let allEvents = events.reduce((acc, ev) => {
+      const eventID = ev.eventName.replace(/GainExperience_([0-9]+)/g, "$1");
+      acc[eventID] = acc[eventID] ?? {};
+      acc[eventID][ev.time] = acc[eventID][ev.time] ?? 0;
+      acc[eventID][ev.time] += ev.count;
+      return acc;
+    }, {});
+
+    new Chart(document.getElementById("exp-by-id"), {
+      type: "bar",
+      options: {
+        scales: {
+          y: { beginAtZero: true, suggestedMin: 0 },
+          x: { stacked: true, type: "timeseries" },
+        },
+      },
+      data: {
+        datasets: Object.keys(allEvents).map((id) => ({
+          label: id,
+          data: allEvents[id],
+        })),
       },
     });
   };
@@ -341,5 +383,6 @@
       let worldEvents = events.filter((ev) => ev.worldId === id);
       allEventsByType(world, worldEvents);
     });
+    experienceEventsByID(events);
   })();
 </script>

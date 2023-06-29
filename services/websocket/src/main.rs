@@ -66,6 +66,7 @@ struct PopEvent {
     vehicle_id: String,
 }
 
+#[derive(Debug)]
 struct AnalyticsEvent {
     world_id: i32,
     event_name: String,
@@ -150,7 +151,7 @@ async fn track_pop(pop_event: PopEvent) {
 }
 
 async fn track_analytics(analytics_event: AnalyticsEvent) {
-    // println!("[ws/track_analytics]");
+    // println!("[ws/track_analytics] {:?}", analytics_event);
     let pool = PG.get().await;
 
     let AnalyticsEvent {
@@ -158,12 +159,17 @@ async fn track_analytics(analytics_event: AnalyticsEvent) {
         event_name,
     } = analytics_event;
 
-    query("INSERT INTO analytics (time, world_id, event_name) VALUES (now(), $1, $2);")
+    match query("INSERT INTO analytics (time, world_id, event_name) VALUES (now(), $1, $2);")
         .bind(world_id)
         .bind(event_name)
         .execute(pool)
         .await
-        .unwrap();
+    {
+        Ok(_) => {}
+        Err(e) => {
+            println!("[ws/track_analytics] ERR => {:?}", e);
+        }
+    }
 }
 
 async fn process_death_event(event: &Event) {
@@ -209,7 +215,11 @@ async fn process_exp_event(event: &Event) {
 
     set.spawn(track_analytics(AnalyticsEvent {
         world_id: event.world_id.clone(),
-        event_name: event.event_name.clone(),
+        event_name: format!(
+            "{}_{}",
+            event.event_name.clone(),
+            event.experience_id.clone()
+        ),
     }));
 
     // Vehicle EXP events

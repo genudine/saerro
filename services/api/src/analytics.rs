@@ -24,7 +24,16 @@ impl Analytics {
     ) -> Vec<Event> {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
-        let sql = format!("SELECT time_bucket_gapfill('{} seconds', time, start => now() - '{}'::interval, finish => now()) AS bucket, CASE WHEN count(*) IS NULL THEN 0 ELSE count(*) END AS count, event_name, world_id FROM analytics WHERE event_name IN ('Death', 'VehicleDestroy', 'GainExperience') AND time > now() - '{}'::interval {} GROUP BY bucket, world_id, event_name ORDER BY bucket ASC",
+        let sql = format!("
+            SELECT 
+                time_bucket_gapfill('{} seconds', time, start => now() - '{}'::interval, finish => now()) AS bucket, 
+                CASE WHEN count(*) IS NULL THEN 0 ELSE count(*) END AS count, 
+                event_name, 
+                world_id 
+            FROM analytics 
+            WHERE time > now() - '{}'::interval {} 
+            GROUP BY bucket, world_id, event_name 
+            ORDER BY bucket ASC",
             if hi_precision {
                 5
             } else {
