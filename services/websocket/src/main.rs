@@ -315,7 +315,13 @@ async fn main() {
     println!("[ws] Connecting to {}", url);
 
     let (tx, rx) = futures::channel::mpsc::unbounded();
-    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
+    let ws_stream = match connect_async(url).await {
+        Ok((ws_stream, _)) => ws_stream,
+        Err(e) => {
+            println!("Error: {}", e);
+            return;
+        }
+    };
     let (write, read) = ws_stream.split();
 
     let fused_writer = rx.map(Ok).forward(write).fuse();
