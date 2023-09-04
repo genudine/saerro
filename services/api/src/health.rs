@@ -131,7 +131,7 @@ impl Health {
     async fn ingest_reachable(&self) -> UpDown {
         reqwest::get(
             std::env::var("WEBSOCKET_HEALTHCHECK")
-                .unwrap_or("http://localhost:8999/health".to_string()),
+                .unwrap_or("http://127.0.0.1:8999/healthz".to_string()),
         )
         .await
         .map(|_| UpDown::Up)

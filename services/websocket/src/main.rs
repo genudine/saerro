@@ -17,7 +17,7 @@ lazy_static! {
     static ref WS_ADDR: String = env::var("WS_ADDR").unwrap_or_default();
     static ref PG: AsyncOnce<sqlx::PgPool> = AsyncOnce::new(async {
         let db_url = std::env::var("DATABASE_URL")
-            .unwrap_or("postgres://saerrouser:saerro321@localhost:5432/data".to_string());
+            .unwrap_or("postgres://saerrouser:saerro321@127.0.0.1:5432/data".to_string());
         PgPoolOptions::new().connect(&db_url).await.unwrap()
     });
 }
