@@ -1,7 +1,4 @@
 [workspace]
-members = [
-    "services/*",
-]
-exclude = [
-    "hack/codegen",
-]
+members = ["services/*"]
+exclude = ["hack/codegen"]
+resolver = "2"
