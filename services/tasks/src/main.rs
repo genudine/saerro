@@ -72,6 +72,9 @@ async fn main() {
             println!("Done!");
         }
         "migrate" => cmd_migrate().await,
+        "print-env" => {
+            std::env::vars().for_each(|(key, value)| println!("{}={}", key, value));
+        }
         _ => {
             println!("Unknown command: {}", command);
             cmd_help();
