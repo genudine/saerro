@@ -71,6 +71,16 @@ async fn main() {
             cmd_prune().await;
             println!("Done!");
         }
+        "auto-maintenance" => loop {
+            println!("Running maintenance tasks...");
+            if !migrations::is_migrated().await {
+                println!("DB is not migrated, running migrations...");
+                cmd_migrate().await;
+            }
+
+            cmd_prune().await;
+            tokio::time::sleep(tokio::time::Duration::from_secs(60 * 5)).await;
+        },
         "migrate" => cmd_migrate().await,
         "print-env" => {
             std::env::vars().for_each(|(key, value)| println!("{}={}", key, value));
