@@ -3,6 +3,7 @@ use crate::{
     population::Population,
     utils::{id_or_name_to_id, id_or_name_to_name, Filters, IdOrNameBy, ID_TO_ZONE, ZONE_IDS},
     vehicles::Vehicles,
+    telemetry,
 };
 use async_graphql::Object;
 
@@ -23,11 +24,15 @@ impl Zone {
 impl Zone {
     /// The ID of the zone/continent.
     async fn id(&self) -> i32 {
+        telemetry::graphql_query("Zone", "id");
+
         id_or_name_to_id(&ZONE_IDS, self.filters.zone.as_ref().unwrap()).unwrap()
     }
 
     /// The name of the continent, in official game capitalization.
     async fn name(&self) -> String {
+        telemetry::graphql_query("Zone", "name");
+
         let name = id_or_name_to_name(&ID_TO_ZONE, self.filters.zone.as_ref().unwrap()).unwrap();
 
         // Capitalize the first letter
@@ -35,14 +40,20 @@ impl Zone {
     }
 
     async fn population(&self) -> Population {
+        telemetry::graphql_query("Zone", "population");
+
         Population::new(Some(self.filters.clone()))
     }
 
     async fn vehicles(&self) -> Vehicles {
+        telemetry::graphql_query("Zone", "vehicles");
+
         Vehicles::new(Some(self.filters.clone()))
     }
 
     async fn classes(&self) -> Classes {
+        telemetry::graphql_query("Zone", "classes");
+
         Classes::new(Some(self.filters.clone()))
     }
 }

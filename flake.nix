@@ -32,6 +32,8 @@
 
       devDeps = [
         fenix.toolchain
+        pkgs.docker-compose
+        pkgs.cargo-watch
       ];
       PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
     in {

@@ -1,6 +1,7 @@
 use crate::{
     factions::{NC, NSO, TR, VS},
     utils::Filters,
+    telemetry,
 };
 use async_graphql::{Context, Object};
 use sqlx::{Pool, Postgres, Row};
@@ -22,6 +23,7 @@ impl Population {
     async fn by_faction<'ctx>(&self, ctx: &Context<'ctx>, faction: i32) -> i64 {
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
+        telemetry::db_read("players", "population_by_faction");
         let sql = format!(
             "SELECT count(*) FROM players WHERE last_updated > now() - interval '15 minutes' AND faction_id = $1 {};",
             self.filters.sql(),
@@ -43,8 +45,11 @@ impl Population {
 #[Object]
 impl Population {
     async fn total<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Population", "total");
+
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
+        telemetry::db_read("players", "population_total");
         let sql = format!(
             "SELECT count(*) FROM players WHERE last_updated > now() - interval '15 minutes' {};",
             self.filters.sql(),
@@ -57,19 +62,23 @@ impl Population {
             .await
             .unwrap()
             .get(0);
-
+        
         query
     }
     async fn nc<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Population", "nc");
         self.by_faction(ctx, NC).await
     }
     async fn vs<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Population", "vs");
         self.by_faction(ctx, VS).await
     }
     async fn tr<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Population", "tr");
         self.by_faction(ctx, TR).await
     }
     async fn ns<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Population", "ns");
         self.by_faction(ctx, NSO).await
     }
 }

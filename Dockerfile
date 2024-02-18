@@ -1,4 +1,4 @@
-FROM rust:1.69.0-bullseye as rust-base
+FROM rust:1.78.0-bullseye as rust-base
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl clang
 ARG MOLD_VERSION=1.11.0

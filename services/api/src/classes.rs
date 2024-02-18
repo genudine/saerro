@@ -1,6 +1,7 @@
 use crate::{
     factions::{NC, TR, VS},
     utils::{Filters, IdOrNameBy},
+    telemetry
 };
 use async_graphql::{Context, Object};
 use sqlx::{Pool, Postgres, Row};
@@ -13,6 +14,7 @@ pub struct Class {
 
 impl Class {
     async fn fetch<'ctx>(&self, ctx: &Context<'ctx>, filters: Filters) -> i64 {
+        telemetry::db_read("players", "fetch");
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
         let sql = format!(
@@ -36,9 +38,12 @@ impl Class {
 #[Object]
 impl Class {
     async fn total<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Class", "total");
+
         self.fetch(ctx, self.filters.clone()).await
     }
     async fn nc<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Class", "nc");
         self.fetch(
             ctx,
             Filters {
@@ -49,6 +54,7 @@ impl Class {
         .await
     }
     async fn tr<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Class", "tr");
         self.fetch(
             ctx,
             Filters {
@@ -59,6 +65,7 @@ impl Class {
         .await
     }
     async fn vs<'ctx>(&self, ctx: &Context<'ctx>) -> i64 {
+        telemetry::graphql_query("Class", "vs");
         self.fetch(
             ctx,
             Filters {
@@ -86,36 +93,42 @@ impl Classes {
 #[Object]
 impl Classes {
     async fn infiltrator(&self) -> Class {
+        telemetry::graphql_query("Classes", "infiltrator");
         Class {
             filters: self.filters.clone(),
             class_name: "infiltrator".to_string(),
         }
     }
     async fn light_assault(&self) -> Class {
+        telemetry::graphql_query("Classes", "light_assault");
         Class {
             filters: self.filters.clone(),
             class_name: "light_assault".to_string(),
         }
     }
     async fn combat_medic(&self) -> Class {
+        telemetry::graphql_query("Classes", "combat_medic");
         Class {
             filters: self.filters.clone(),
             class_name: "combat_medic".to_string(),
         }
     }
     async fn engineer(&self) -> Class {
+        telemetry::graphql_query("Classes", "engineer");
         Class {
             filters: self.filters.clone(),
             class_name: "engineer".to_string(),
         }
     }
     async fn heavy_assault(&self) -> Class {
+        telemetry::graphql_query("Classes", "heavy_assault");
         Class {
             filters: self.filters.clone(),
             class_name: "heavy_assault".to_string(),
         }
     }
     async fn max(&self) -> Class {
+        telemetry::graphql_query("Classes", "max");
         Class {
             filters: self.filters.clone(),
             class_name: "max".to_string(),
@@ -135,6 +148,7 @@ impl ClassesQuery {
 
     /// Get a specific class
     pub async fn class(&self, filter: Option<Filters>, class_name: String) -> Class {
+        telemetry::graphql_query("Classes", "");
         Class {
             filters: filter.unwrap_or_default(),
             class_name,

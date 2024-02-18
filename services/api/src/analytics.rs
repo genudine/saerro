@@ -1,6 +1,7 @@
 use async_graphql::{futures_util::TryStreamExt, Context, Object, SimpleObject};
 use chrono::{DateTime, Utc};
 use sqlx::{query, Pool, Postgres, Row};
+use crate::telemetry;
 
 pub struct Analytics {}
 
@@ -22,8 +23,10 @@ impl Analytics {
         world_id: Option<i32>,
         #[graphql(default = false)] hi_precision: bool,
     ) -> Vec<Event> {
+        telemetry::graphql_query("Analytics", "events");
         let pool = ctx.data::<Pool<Postgres>>().unwrap();
 
+        telemetry::db_read("analytics", "events");
         let sql = format!("
             SELECT 
                 time_bucket_gapfill('{} seconds', time, start => now() - '{}'::interval, finish => now()) AS bucket, 

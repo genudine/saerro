@@ -4,6 +4,7 @@ use crate::{
     utils::{id_or_name_to_id, id_or_name_to_name, Filters, IdOrNameBy, ID_TO_WORLD, WORLD_IDS},
     vehicles::Vehicles,
     zone::Zones,
+    telemetry,
 };
 use async_graphql::Object;
 
@@ -33,11 +34,15 @@ impl World {
 impl World {
     /// The ID of the world.
     async fn id(&self) -> i32 {
+        telemetry::graphql_query("World", "id");
+
         id_or_name_to_id(&WORLD_IDS, self.filter.world.as_ref().unwrap()).unwrap()
     }
 
     /// The name of the world, in official game capitalization.
     async fn name(&self) -> String {
+        telemetry::graphql_query("World", "name");
+
         let name = id_or_name_to_name(&ID_TO_WORLD, self.filter.world.as_ref().unwrap()).unwrap();
 
         // Special case for SolTech, lol.
@@ -51,6 +56,8 @@ impl World {
 
     /// Population filtered to this world.
     async fn population(&self) -> Population {
+        telemetry::graphql_query("World", "population");
+
         Population::new(Some(Filters {
             world: self.filter.world.clone(),
             faction: None,
@@ -60,6 +67,8 @@ impl World {
 
     /// Vehicles filtered to this world.
     async fn vehicles(&self) -> Vehicles {
+        telemetry::graphql_query("World", "vehicles");
+
         Vehicles::new(Some(Filters {
             world: self.filter.world.clone(),
             faction: None,
@@ -69,6 +78,8 @@ impl World {
 
     /// Classes filtered to this world.
     async fn classes(&self) -> Classes {
+        telemetry::graphql_query("World", "classes");
+
         Classes::new(Some(Filters {
             world: self.filter.world.clone(),
             faction: None,
@@ -78,6 +89,8 @@ impl World {
 
     /// Get a specific zone/continent on this world.
     async fn zones(&self) -> Zones {
+        telemetry::graphql_query("World", "zones");
+
         Zones::new(Some(self.filter.clone()))
     }
 }

@@ -12,6 +12,7 @@ use tokio::task::JoinSet;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 mod translators;
+mod telemetry;
 
 lazy_static! {
     static ref WS_ADDR: String = env::var("WS_ADDR").unwrap_or_default();
@@ -75,6 +76,7 @@ struct AnalyticsEvent {
 async fn get_team_id(character_id: String) -> Result<i32, sqlx::Error> {
     let pool = PG.get().await;
 
+    telemetry::db_read("players", "get_team_id");
     let team_id: i32 = query("SELECT faction_id FROM players WHERE character_id = $1 LIMIT 1;")
         .bind(character_id.clone())
         .fetch_one(pool)
@@ -108,6 +110,7 @@ async fn track_pop(pop_event: PopEvent) {
         translators::vehicle_to_name(vehicle_id.as_str())
     };
 
+    telemetry::db_write("players", "track_pop");
     query(
         "
         INSERT INTO players (last_updated, character_id, world_id, faction_id, zone_id, class_name) 
@@ -130,6 +133,7 @@ async fn track_pop(pop_event: PopEvent) {
     .unwrap();
 
     if vehicle_name != "unknown" {
+        telemetry::db_write("vehicles", "track_pop");
         query("INSERT INTO vehicles (last_updated, character_id, world_id, faction_id, zone_id, vehicle_name) 
         VALUES (now(), $1, $2, $3, $4, $5) 
         ON CONFLICT (character_id) DO UPDATE SET
@@ -159,6 +163,7 @@ async fn track_analytics(analytics_event: AnalyticsEvent) {
         event_name,
     } = analytics_event;
 
+    telemetry::db_write("analytics", "track_analytics");
     match query("INSERT INTO analytics (time, world_id, event_name) VALUES (now(), $1, $2);")
         .bind(world_id)
         .bind(event_name)
@@ -210,6 +215,7 @@ async fn process_death_event(event: &Event) {
 }
 
 async fn process_exp_event(event: &Event) {
+    telemetry::experience_event(&event.world_id, &event.experience_id); 
     let mut set = JoinSet::new();
     // println!("[ws/process_event] EVENT: {:?}", event);
 
@@ -287,6 +293,9 @@ async fn healthz() {
                 "status": "ok",
             }))
         }),
+    ).route(
+        "/metrics",
+        get(telemetry::handler)
     );
 
     let port: u16 = std::env::var("PORT")
@@ -325,15 +334,19 @@ async fn main() {
 
             let mut data: Payload = match serde_json::from_str(body) {
                 Ok(data) => data,
-                Err(_) => {
+                Err(_e) => {
                     // println!("Error: {}; body: {}", e, body.clone());
+                    telemetry::event_dropped(&0, &"".to_string(), "decoding failure");
                     return;
                 }
             };
 
             if data.payload.event_name == "" {
+                telemetry::event_dropped(&data.payload.world_id, &data.payload.event_name, "not event");
                 return;
             }
+
+            telemetry::event(&data.payload.world_id, &data.payload.event_name);
 
             if data.payload.event_name == "Death" || data.payload.event_name == "VehicleDestroy" {
                 process_death_event(&data.payload).await;
@@ -346,12 +359,16 @@ async fn main() {
                         Ok(team_id) => {
                             data.payload.team_id = team_id;
                         }
-                        Err(_) => {}
+                        Err(_) => {
+                            telemetry::event_dropped(&data.payload.world_id, &data.payload.event_name, "team_id missing");
+                        }
                     }
                 }
                 process_exp_event(&data.payload).await;
                 return;
             }
+
+            telemetry::event_dropped(&data.payload.world_id, &data.payload.event_name, "unprocessable");
         })
         .fuse();
 

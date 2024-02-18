@@ -4,6 +4,7 @@ mod factions;
 mod health;
 mod population;
 mod query;
+mod telemetry;
 mod utils;
 mod vehicles;
 mod world;
@@ -26,10 +27,12 @@ use tower_http::cors::{Any, CorsLayer};
 extern crate serde_json;
 
 async fn index() -> Html<&'static str> {
+    telemetry::http_request("/", "GET");
     Html(include_str!("html/index.html"))
 }
 
 async fn ingest() -> Html<&'static str> {
+    telemetry::http_request("/ingest", "GET");
     Html(include_str!("html/ingest.html"))
 }
 
@@ -41,6 +44,7 @@ async fn graphql_handler_post(
     Extension(schema): Extension<Schema<query::Query, EmptyMutation, EmptySubscription>>,
     Json(query): Json<Request>,
 ) -> Json<Response> {
+    telemetry::http_request("/graphql", "POST");
     Json(schema.execute(query).await)
 }
 
@@ -48,6 +52,8 @@ async fn graphql_handler_get(
     Extension(schema): Extension<Schema<query::Query, EmptyMutation, EmptySubscription>>,
     query: Query<Request>,
 ) -> axum::response::Response {
+    telemetry::http_request("/graphql", "GET");
+
     if query.query == "" {
         return Redirect::to("/graphiql").into_response();
     }
@@ -56,6 +62,8 @@ async fn graphql_handler_get(
 }
 
 async fn graphiql() -> impl IntoResponse {
+    telemetry::http_request("/graphiql", "GET");
+
     Html(
         GraphiQLSource::build()
             .endpoint("/graphql")
@@ -83,6 +91,8 @@ async fn main() {
             post(graphql_handler_post).get(graphql_handler_get),
         )
         .route("/graphiql", get(graphiql))
+        .route("/metrics", get(telemetry::handler))
+        .route("/metrics/combined", get(telemetry::handler_combined))
         .fallback(handle_404)
         .layer(Extension(db))
         .layer(Extension(schema))
